@@ -3,11 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
+    "@expo/metro-runtime": "~57.0.3",
+    "@expo/vector-icons": "^15.0.2",
     "expo": "~57.0.2",
     "expo-status-bar": "~57.0.0",
     "lucide-react-native": "^1.23.0",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.0",
+    "react-native-svg": "15.15.4",
+    "react-native-web": "^0.21.2",
     "twrnc": "^4.16.0"
   },
   "scripts": {
