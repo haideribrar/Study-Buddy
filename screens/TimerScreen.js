@@ -103,22 +103,24 @@ export default function TimerScreen({ onNavigate, onOpenMenu }) {
   ];
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-[#FDF6EC]`}>
+    <View style={tw`flex-grow flex-1 bg-[#FDF6EC]`}>
       {/* Header */}
-      <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white border-b border-[#F5EBE1]`}>
-        <View style={tw`flex-row items-center`}>
-          <TouchableOpacity 
-            onPress={onOpenMenu}
-            style={tw`mr-3.5 w-9 h-9 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
-          >
-            <Feather name="menu" size={16} color="#FF7C5C" />
-          </TouchableOpacity>
-          <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Study Timer</Text>
+      <SafeAreaView style={tw`bg-white`}>
+        <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white border-b border-[#F5EBE1]`}>
+          <View style={tw`flex-row items-center`}>
+            <TouchableOpacity 
+              onPress={onOpenMenu}
+              style={tw`mr-3.5 w-9 h-9 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
+            >
+              <Feather name="menu" size={16} color="#FF7C5C" />
+            </TouchableOpacity>
+            <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Study Timer</Text>
+          </View>
+          <Feather name="clock" size={18} color="#FF7C5C" />
         </View>
-        <Feather name="clock" size={18} color="#FF7C5C" />
-      </View>
+      </SafeAreaView>
 
-      <ScrollView contentContainerStyle={tw`flex-grow items-center justify-center px-6 pb-28 pt-4`}>
+      <ScrollView style={tw`flex-1`} contentContainerStyle={tw`flex-grow items-center justify-center px-6 pb-28 pt-4`}>
         {/* Cheat/Distraction Warning Overlay */}
         {showCheatWarning ? (
           <View style={tw`bg-white border border-red-100 rounded-[32px] w-full max-w-sm p-6 items-center shadow-md mb-6`}>
@@ -294,7 +296,7 @@ export default function TimerScreen({ onNavigate, onOpenMenu }) {
       </ScrollView>
 
       {/* Footer Tab Bar */}
-      <View style={tw`absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 pt-2.5 pb-6 px-6 flex-row justify-between items-center shadow-lg`}>
+      <View style={tw`absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 pt-2.5 pb-7 px-6 flex-row justify-between items-center shadow-lg`}>
         {navItems.map((item) => {
           const isActive = item.id === 'timer';
           return (
@@ -316,6 +318,6 @@ export default function TimerScreen({ onNavigate, onOpenMenu }) {
           );
         })}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

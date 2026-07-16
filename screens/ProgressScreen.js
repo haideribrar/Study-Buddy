@@ -27,20 +27,22 @@ export default function ProgressScreen({ onNavigate, onOpenMenu, events, onUpdat
   ];
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-[#FDF6EC]`}>
+    <View style={tw`flex-grow flex-1 bg-[#FDF6EC]`}>
       {/* Header */}
-      <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white border-b border-[#F5EBE1]`}>
-        <View style={tw`flex-row items-center`}>
-          <TouchableOpacity 
-            onPress={onOpenMenu}
-            style={tw`mr-3.5 w-9 h-9 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
-          >
-            <Feather name="menu" size={16} color="#FF7C5C" />
-          </TouchableOpacity>
-          <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Progress Analyzer</Text>
+      <SafeAreaView style={tw`bg-white`}>
+        <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white border-b border-[#F5EBE1]`}>
+          <View style={tw`flex-row items-center`}>
+            <TouchableOpacity 
+              onPress={onOpenMenu}
+              style={tw`mr-3.5 w-9 h-9 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
+            >
+              <Feather name="menu" size={16} color="#FF7C5C" />
+            </TouchableOpacity>
+            <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Progress Analyzer</Text>
+          </View>
+          <Feather name="trending-up" size={18} color="#FF7C5C" />
         </View>
-        <Feather name="trending-up" size={18} color="#FF7C5C" />
-      </View>
+      </SafeAreaView>
 
       {/* Category Tabs */}
       <View style={tw`flex-row justify-between px-6 py-4 bg-transparent`}>
@@ -64,7 +66,7 @@ export default function ProgressScreen({ onNavigate, onOpenMenu, events, onUpdat
         })}
       </View>
 
-      <ScrollView contentContainerStyle={tw`px-6 pt-2 pb-28`}>
+      <ScrollView style={tw`flex-1`} contentContainerStyle={tw`px-6 pt-2 pb-28`}>
         {/* Study Streak Bento/Headspace Block */}
         <View style={tw`bg-white border border-[#F5EBE1] rounded-[28px] p-5 mb-6 shadow-sm flex-row items-center justify-between`}>
           <View style={tw`flex-row items-center`}>
@@ -148,7 +150,7 @@ export default function ProgressScreen({ onNavigate, onOpenMenu, events, onUpdat
       </ScrollView>
 
       {/* Headspace Footer Tab Bar */}
-      <View style={tw`absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 pt-2.5 pb-6 px-6 flex-row justify-between items-center shadow-lg`}>
+      <View style={tw`absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 pt-2.5 pb-7 px-6 flex-row justify-between items-center shadow-lg`}>
         {navItems.map((item) => {
           const isActive = item.id === 'progress';
           return (
@@ -170,6 +172,6 @@ export default function ProgressScreen({ onNavigate, onOpenMenu, events, onUpdat
           );
         })}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

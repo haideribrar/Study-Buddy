@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity, SafeAreaView, Platform, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -57,6 +57,10 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState('login');
   const [username, setUsername] = useState('Jane Doe');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Animated values for drawer transitions
+  const slideAnim = useRef(new Animated.Value(-300)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   
   // Pre-load dummy events matching the wireframe with sub-tasks
   const [events, setEvents] = useState([
@@ -205,8 +209,38 @@ export default function App() {
   };
 
   const closeMenu = () => {
-    setIsMenuOpen(false);
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: -300,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setIsMenuOpen(false);
+    });
   };
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isMenuOpen]);
 
   // Switch renderer for mock navigation
   const renderScreen = () => {
@@ -271,76 +305,88 @@ export default function App() {
       {isMenuOpen && (
         <View style={styles.overlayContainer}>
           {/* Backdrop click to close */}
-          <TouchableOpacity 
-            activeOpacity={1} 
-            onPress={closeMenu} 
-            style={tw`absolute inset-0 bg-[#FF7C5C]/20`}
-          />
+          <Animated.View style={[
+            tw`absolute inset-0 bg-[#FF7C5C]/20`,
+            { opacity: fadeAnim }
+          ]}>
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={closeMenu} 
+              style={tw`absolute inset-0`}
+            />
+          </Animated.View>
           
           {/* Side Drawer Body - Headspace UI Styled */}
-          <SafeAreaView style={tw`w-72 h-full bg-[#FDF6EC] border-r border-[#F5EBE1] shadow-lg p-6 justify-between z-50`}>
-            <View>
-              {/* Drawer Header */}
-              <View style={tw`flex-row items-center justify-between mb-8`}>
-                <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Study Buddy Menu</Text>
-                <TouchableOpacity 
-                  onPress={closeMenu}
-                  style={tw`w-8 h-8 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
+          <Animated.View style={[
+            tw`w-72 h-full bg-[#FDF6EC] border-r border-[#F5EBE1] shadow-lg z-50`,
+            { transform: [{ translateX: slideAnim }] }
+          ]}>
+            <SafeAreaView style={tw`flex-1`}>
+              <View style={tw`flex-1 p-6 justify-between`}>
+                <View>
+                  {/* Drawer Header */}
+                  <View style={tw`flex-row items-center justify-between mb-8`}>
+                    <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Study Buddy Menu</Text>
+                    <TouchableOpacity 
+                      onPress={closeMenu}
+                      style={tw`w-8 h-8 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
+                    >
+                      <Feather name="x" size={14} color="#FF7C5C" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Profile Card (Headspace Box) */}
+                  <View style={tw`bg-white border border-[#F5EBE1] rounded-[24px] p-4.5 mb-6 shadow-sm`}>
+                    <View style={tw`flex-row items-center`}>
+                      <View style={tw`w-10 h-10 bg-[#FF7C5C]/10 rounded-full items-center justify-center mr-3.5`}>
+                        <FontAwesome name="smile-o" size={18} color="#FF7C5C" />
+                      </View>
+                      <View style={tw`flex-1`}>
+                        <Text style={tw`text-[10px] font-bold text-[#FF7C5C] uppercase tracking-wider`}>Active Student</Text>
+                        <Text style={tw`text-sm font-bold text-slate-800`} numberOfLines={1}>{username}</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Menu items (Headspace elements) */}
+                  <TouchableOpacity
+                    onPress={() => {
+                      closeMenu();
+                      setCurrentScreen('edit_profile');
+                    }}
+                    style={tw`flex-row items-center bg-white border border-[#F5EBE1] rounded-[20px] p-4 mb-4.5 shadow-sm`}
+                  >
+                    <View style={tw`w-7 h-7 bg-slate-50 rounded-full items-center justify-center mr-3`}>
+                      <Feather name="user" size={13} color="#475569" />
+                    </View>
+                    <Text style={tw`text-sm font-bold text-slate-700`}>Edit Profile</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      closeMenu();
+                      setCurrentScreen('calendar');
+                    }}
+                    style={tw`flex-row items-center bg-white border border-[#F5EBE1] rounded-[20px] p-4 mb-4.5 shadow-sm`}
+                  >
+                    <View style={tw`w-7 h-7 bg-slate-50 rounded-full items-center justify-center mr-3`}>
+                      <Feather name="calendar" size={13} color="#475569" />
+                    </View>
+                    <Text style={tw`text-sm font-bold text-slate-700`}>Full Calendar</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Logout Footer Option (Headspace Style) */}
+                <TouchableOpacity
+                  onPress={handleLogout}
+                  style={tw`flex-row items-center justify-center bg-white border border-red-100 rounded-[20px] p-4 shadow-sm`}
                 >
-                  <Feather name="x" size={14} color="#FF7C5C" />
+                  <Feather name="log-out" size={13} color="#EF4444" style={tw`mr-2`} />
+                  <Text style={tw`text-red-500 font-bold text-sm`}>Log Out</Text>
                 </TouchableOpacity>
               </View>
-
-              {/* Profile Card (Headspace Box) */}
-              <View style={tw`bg-white border border-[#F5EBE1] rounded-[24px] p-4.5 mb-6 shadow-sm`}>
-                <View style={tw`flex-row items-center`}>
-                  <View style={tw`w-10 h-10 bg-[#FF7C5C]/10 rounded-full items-center justify-center mr-3.5`}>
-                    <FontAwesome name="smile-o" size={18} color="#FF7C5C" />
-                  </View>
-                  <View style={tw`flex-1`}>
-                    <Text style={tw`text-[10px] font-bold text-[#FF7C5C] uppercase tracking-wider`}>Active Student</Text>
-                    <Text style={tw`text-sm font-bold text-slate-800`} numberOfLines={1}>{username}</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Menu items (Headspace elements) */}
-              <TouchableOpacity
-                onPress={() => {
-                  closeMenu();
-                  setCurrentScreen('edit_profile');
-                }}
-                style={tw`flex-row items-center bg-white border border-[#F5EBE1] rounded-[20px] p-4 mb-4.5 shadow-sm`}
-              >
-                <View style={tw`w-7 h-7 bg-slate-50 rounded-full items-center justify-center mr-3`}>
-                  <Feather name="user" size={13} color="#475569" />
-                </View>
-                <Text style={tw`text-sm font-bold text-slate-700`}>Edit Profile</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => {
-                  closeMenu();
-                  setCurrentScreen('calendar');
-                }}
-                style={tw`flex-row items-center bg-white border border-[#F5EBE1] rounded-[20px] p-4 mb-4.5 shadow-sm`}
-              >
-                <View style={tw`w-7 h-7 bg-slate-50 rounded-full items-center justify-center mr-3`}>
-                  <Feather name="calendar" size={13} color="#475569" />
-                </View>
-                <Text style={tw`text-sm font-bold text-slate-700`}>Full Calendar</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Logout Footer Option (Headspace Style) */}
-            <TouchableOpacity
-              onPress={handleLogout}
-              style={tw`flex-row items-center justify-center bg-white border border-red-100 rounded-[20px] p-4 shadow-sm`}
-            >
-              <Feather name="log-out" size={13} color="#EF4444" style={tw`mr-2`} />
-              <Text style={tw`text-red-500 font-bold text-sm`}>Log Out</Text>
-            </TouchableOpacity>
-          </SafeAreaView>
+            </SafeAreaView>
+          </Animated.View>
         </View>
       )}
     </View>

@@ -20,7 +20,6 @@ export default function LoginScreen({ onNavigate, onLogin }) {
       >
         <ScrollView contentContainerStyle={tw`flex-grow justify-center px-6 py-12`}>
           {/* Headspace Branding Logo */}
-          <div style={{ display: 'none' }} />
           <View style={tw`items-center mb-8`}>
             <View style={tw`w-20 h-20 bg-[#FF7C5C] rounded-full items-center justify-center shadow-md mb-4`}>
               <FontAwesome name="smile-o" size={44} color="#FFFFFF" />

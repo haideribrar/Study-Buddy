@@ -30,20 +30,22 @@ export default function CalendarScreen({ onNavigate, events }) {
   };
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-[#FDF6EC]`}>
+    <View style={tw`flex-grow flex-1 bg-[#FDF6EC]`}>
       {/* Header */}
-      <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white border-b border-[#F5EBE1]`}>
-        <TouchableOpacity 
-          onPress={() => onNavigate('dashboard')}
-          style={tw`w-9 h-9 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
-        >
-          <Feather name="arrow-left" size={16} color="#FF7C5C" />
-        </TouchableOpacity>
-        <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Study Calendar</Text>
-        <View style={tw`w-9`} />
-      </View>
+      <SafeAreaView style={tw`bg-white`}>
+        <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white border-b border-[#F5EBE1]`}>
+          <TouchableOpacity 
+            onPress={() => onNavigate('dashboard')}
+            style={tw`w-9 h-9 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
+          >
+            <Feather name="arrow-left" size={16} color="#FF7C5C" />
+          </TouchableOpacity>
+          <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Study Calendar</Text>
+          <View style={tw`w-9`} />
+        </View>
+      </SafeAreaView>
 
-      <ScrollView contentContainerStyle={tw`px-6 pt-6 pb-24`}>
+      <ScrollView style={tw`flex-1`} contentContainerStyle={tw`px-6 pt-6 pb-24`}>
         {/* Headspace Banner */}
         <View style={tw`bg-white border border-[#F5EBE1] rounded-[32px] p-5 mb-5 shadow-sm`}>
           <Text style={tw`text-sm font-bold text-slate-800 mb-0.5`}>Monthly Tracker 📅</Text>
@@ -120,6 +122,6 @@ export default function CalendarScreen({ onNavigate, events }) {
           </View>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

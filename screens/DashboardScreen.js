@@ -22,25 +22,27 @@ export default function DashboardScreen({ events, onDeleteEvent, onNavigate, onO
   ];
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-[#FDF6EC]`}>
+    <View style={tw`flex-grow flex-1 bg-[#FDF6EC]`}>
       {/* Headspace Header */}
-      <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white border-b border-[#F5EBE1]`}>
-        <View style={tw`flex-row items-center`}>
-          <TouchableOpacity 
-            onPress={onOpenMenu}
-            style={tw`mr-3.5 w-9 h-9 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
-          >
-            <Feather name="menu" size={16} color="#FF7C5C" />
-          </TouchableOpacity>
-          <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Study Buddy</Text>
+      <SafeAreaView style={tw`bg-white`}>
+        <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white border-b border-[#F5EBE1]`}>
+          <View style={tw`flex-row items-center`}>
+            <TouchableOpacity 
+              onPress={onOpenMenu}
+              style={tw`mr-3.5 w-9 h-9 bg-white border border-[#F5EBE1] rounded-full items-center justify-center shadow-sm`}
+            >
+              <Feather name="menu" size={16} color="#FF7C5C" />
+            </TouchableOpacity>
+            <Text style={tw`text-lg font-bold text-slate-800 tracking-tight`}>Study Buddy</Text>
+          </View>
+          <View style={tw`flex-row items-center bg-[#FF7C5C]/10 border border-[#FF7C5C]/20 rounded-full py-1 px-3.5 shadow-sm`}>
+            <View style={tw`w-2 h-2 rounded-full bg-[#FF7C5C] mr-2`} />
+            <Text style={tw`text-xs font-bold text-[#FF7C5C]`}>{username}</Text>
+          </View>
         </View>
-        <View style={tw`flex-row items-center bg-[#FF7C5C]/10 border border-[#FF7C5C]/20 rounded-full py-1 px-3.5 shadow-sm`}>
-          <View style={tw`w-2 h-2 rounded-full bg-[#FF7C5C] mr-2`} />
-          <Text style={tw`text-xs font-bold text-[#FF7C5C]`}>{username}</Text>
-        </View>
-      </View>
+      </SafeAreaView>
 
-      <ScrollView contentContainerStyle={tw`px-6 pt-6 pb-28`}>
+      <ScrollView style={tw`flex-1`} contentContainerStyle={tw`px-6 pt-6 pb-28`}>
         {/* Banner - Calming Card */}
         <View style={tw`bg-[#858CE9] rounded-[32px] p-5.5 mb-6.5 shadow-sm`}>
           <Text style={tw`text-white text-lg font-bold mb-1.5`}>Ready to Focus? 🧠</Text>
@@ -142,7 +144,7 @@ export default function DashboardScreen({ events, onDeleteEvent, onNavigate, onO
       </ScrollView>
 
       {/* Headspace Tab Bar */}
-      <View style={tw`absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 pt-2.5 pb-6 px-6 flex-row justify-between items-center shadow-lg`}>
+      <View style={tw`absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 pt-2.5 pb-7 px-6 flex-row justify-between items-center shadow-lg`}>
         {navItems.map((item) => {
           const isActive = item.id === 'dashboard';
           return (
@@ -164,6 +166,6 @@ export default function DashboardScreen({ events, onDeleteEvent, onNavigate, onO
           );
         })}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
