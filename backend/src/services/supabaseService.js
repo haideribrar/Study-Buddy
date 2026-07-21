@@ -354,6 +354,28 @@ const resetPasswordWithHint = async (email, hint, newPassword) => {
   return true;
 };
 
+/**
+ * Counts user messages sent today (sender = 'user').
+ */
+const getUserMessageCountToday = async (userId, userToken) => {
+  const userClient = getSupabaseUserClient(userToken);
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const { count, error } = await userClient
+    .from('chat_messages')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('sender', 'user')
+    .gte('created_at', startOfToday.toISOString());
+
+  if (error) {
+    console.error('[Supabase Service] getUserMessageCountToday error:', error.message);
+    throw error;
+  }
+  return count || 0;
+};
+
 module.exports = {
   supabaseAdmin,
   getSupabaseUserClient,
@@ -368,6 +390,7 @@ module.exports = {
   getChatHistory,
   saveChatMessage,
   checkEmailExists,
-  resetPasswordWithHint
+  resetPasswordWithHint,
+  getUserMessageCountToday
 };
 

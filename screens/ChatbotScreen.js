@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar } from 'react-native';
 import tw from 'twrnc';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const renderMessageText = (text, isBot) => {
   if (!text) return null;
@@ -21,7 +23,7 @@ const renderMessageText = (text, isBot) => {
   });
 };
 
-export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessages, setChatMessages, isSleepingCooldown }) {
+export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessages, setChatMessages, isSleepingCooldown, isMenuOpen }) {
   const [internalMessages, setInternalMessages] = useState([
     { id: 1, sender: 'bot', text: 'Hi! I am your study buddy. How may I help you today?', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
   ]);
@@ -35,6 +37,22 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
   const fetchedHistoryRef = useRef(false);
 
   useEffect(() => {
+    const loadCachedHistory = async () => {
+      try {
+        let cached = null;
+        if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+          cached = localStorage.getItem('cached_chat_history');
+        } else {
+          cached = await AsyncStorage.getItem('cached_chat_history');
+        }
+        if (cached) {
+          setMessages(JSON.parse(cached));
+        }
+      } catch (cacheErr) {
+        console.warn('[ChatbotScreen] Error loading cached chat history:', cacheErr);
+      }
+    };
+
     const fetchHistory = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/ai/history`, {
@@ -59,9 +77,27 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
 
     if (token && !fetchedHistoryRef.current) {
       fetchedHistoryRef.current = true;
-      fetchHistory();
+      loadCachedHistory().then(() => fetchHistory());
     }
   }, [token]);
+
+  // Persist messages array changes to storage cache
+  useEffect(() => {
+    if (messages && messages.length > 1) {
+      (async () => {
+        try {
+          const stringified = JSON.stringify(messages);
+          if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+            localStorage.setItem('cached_chat_history', stringified);
+          } else {
+            await AsyncStorage.setItem('cached_chat_history', stringified);
+          }
+        } catch (cacheErr) {
+          console.warn('[ChatbotScreen] Error caching chat messages:', cacheErr);
+        }
+      })();
+    }
+  }, [messages]);
 
 
   const handleSend = async () => {
@@ -164,7 +200,11 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
   return (
     <View style={tw`flex-grow flex-1 bg-[#F8FAFC]`}>
       {/* Glass Header */}
-      <SafeAreaView style={tw`bg-white/80 backdrop-blur-md border-b border-slate-200/50`}>
+      <SafeAreaView style={[
+        tw`bg-white/80 backdrop-blur-md border-b border-slate-200/50`,
+        { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0 }
+      ]}>
+
         <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4`}>
           <View style={tw`flex-row items-center`}>
             <TouchableOpacity 
@@ -279,28 +319,30 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
       </KeyboardAvoidingView>
 
       {/* Floating Glass Navigation Bar */}
-      <View style={tw`absolute bottom-6 left-6 right-6 bg-white/90 border border-white/80 rounded-full py-2.5 px-6 flex-row justify-between items-center shadow-xl shadow-indigo-500/10 backdrop-blur-lg`}>
-        {navItems.map((item) => {
-          const isActive = item.id === 'chatbot';
-          return (
-            <TouchableOpacity 
-              key={item.id} 
-              onPress={() => onNavigate(item.id)}
-              style={tw`items-center px-3`}
-            >
-              <View style={[
-                tw`p-2 rounded-full`,
-                isActive ? tw`bg-indigo-50 border border-indigo-100` : {}
-              ]}>
-                <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
-              </View>
-              <Text style={tw`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      {!isMenuOpen && (
+        <View style={tw`absolute bottom-6 left-6 right-6 bg-white/90 border border-white/80 rounded-full py-2.5 px-6 flex-row justify-between items-center shadow-xl shadow-indigo-500/10 backdrop-blur-lg`}>
+          {navItems.map((item) => {
+            const isActive = item.id === 'chatbot';
+            return (
+              <TouchableOpacity 
+                key={item.id} 
+                onPress={() => onNavigate(item.id)}
+                style={tw`items-center px-3`}
+              >
+                <View style={[
+                  tw`p-2 rounded-full`,
+                  isActive ? tw`bg-indigo-50 border border-indigo-100` : {}
+                ]}>
+                  <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
+                </View>
+                <Text style={tw`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }

@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
 import tw from 'twrnc';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 
-export default function DashboardScreen({ events, onDeleteEvent, onNavigate, onOpenMenu, username }) {
+export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate, onOpenMenu, username, isMenuOpen }) {
+
   
   // Robust date parser for DD/MM/YYYY or ISO strings
   const parseEventDate = (dateStr) => {
@@ -21,10 +22,17 @@ export default function DashboardScreen({ events, onDeleteEvent, onNavigate, onO
     return isNaN(d.getTime()) ? new Date(8640000000000000) : d;
   };
 
-  // Sort events priority-wise (closest due date first)
-  const sortedEvents = [...events].sort((a, b) => {
-    return parseEventDate(a.date) - parseEventDate(b.date);
-  });
+  // Memoized, processed, and sorted events (closest due date first)
+  const processedEvents = React.useMemo(() => {
+    return [...events]
+      .map((e) => ({
+        ...e,
+        parsedDate: parseEventDate(e.date),
+        upcomingText: getUpcomingDaysText(e.date),
+        catConfig: getCategoryBarConfig(e.category),
+      }))
+      .sort((a, b) => a.parsedDate - b.parsedDate);
+  }, [events]);
 
   const getUpcomingDaysText = (dateStr) => {
     if (!dateStr) return null;
@@ -97,7 +105,11 @@ export default function DashboardScreen({ events, onDeleteEvent, onNavigate, onO
   return (
     <View style={tw`flex-grow flex-1 bg-[#F8FAFC]`}>
       {/* Header */}
-      <SafeAreaView style={tw`bg-white/80 backdrop-blur-md border-b border-slate-200/50`}>
+      <SafeAreaView style={[
+        tw`bg-white/80 backdrop-blur-md border-b border-slate-200/50`,
+        { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0 }
+      ]}>
+
         <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4`}>
           <View style={tw`flex-row items-center`}>
             <TouchableOpacity 
@@ -146,7 +158,7 @@ export default function DashboardScreen({ events, onDeleteEvent, onNavigate, onO
         </View>
 
         {/* Events List (Frosted Glass Cards) */}
-        {sortedEvents.length === 0 ? (
+        {processedEvents.length === 0 ? (
           <View style={tw`bg-white/80 border border-slate-200/60 rounded-[28px] p-8 items-center shadow-sm shadow-indigo-500/5`}>
             <View style={tw`w-14 h-14 bg-indigo-50 rounded-full items-center justify-center mb-3`}>
               <Feather name="calendar" size={24} color="#6366F1" />
@@ -163,9 +175,9 @@ export default function DashboardScreen({ events, onDeleteEvent, onNavigate, onO
             </TouchableOpacity>
           </View>
         ) : (
-          sortedEvents.map((event) => {
-            const catConfig = getCategoryBarConfig(event.category);
-            const upcomingText = getUpcomingDaysText(event.date);
+          processedEvents.map((event) => {
+            const catConfig = event.catConfig;
+            const upcomingText = event.upcomingText;
 
             return (
               <View 
@@ -239,28 +251,30 @@ export default function DashboardScreen({ events, onDeleteEvent, onNavigate, onO
       </ScrollView>
 
       {/* Floating Glass Navigation Bar */}
-      <View style={tw`absolute bottom-6 left-6 right-6 bg-white/90 border border-white/80 rounded-full py-2.5 px-6 flex-row justify-between items-center shadow-xl shadow-indigo-500/10 backdrop-blur-lg`}>
-        {navItems.map((item) => {
-          const isActive = item.id === 'dashboard';
-          return (
-            <TouchableOpacity 
-              key={item.id} 
-              onPress={() => onNavigate(item.id)}
-              style={tw`items-center px-3`}
-            >
-              <View style={[
-                tw`p-2 rounded-full`,
-                isActive ? tw`bg-indigo-50 border border-indigo-100` : {}
-              ]}>
-                <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
-              </View>
-              <Text style={tw`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      {!isMenuOpen && (
+        <View style={tw`absolute bottom-6 left-6 right-6 bg-white/90 border border-white/80 rounded-full py-2.5 px-6 flex-row justify-between items-center shadow-xl shadow-indigo-500/10 backdrop-blur-lg`}>
+          {navItems.map((item) => {
+            const isActive = item.id === 'dashboard';
+            return (
+              <TouchableOpacity 
+                key={item.id} 
+                onPress={() => onNavigate(item.id)}
+                style={tw`items-center px-3`}
+              >
+                <View style={[
+                  tw`p-2 rounded-full`,
+                  isActive ? tw`bg-indigo-50 border border-indigo-100` : {}
+                ]}>
+                  <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
+                </View>
+                <Text style={tw`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }

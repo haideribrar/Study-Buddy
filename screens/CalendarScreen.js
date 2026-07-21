@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
 import tw from 'twrnc';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 
-export default function CalendarScreen({ onNavigate, events }) {
+export default function CalendarScreen({ onNavigate, events = [] }) {
   const daysOfWeek = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const safeEvents = Array.isArray(events) ? events : [];
 
   // Current Month & Year State
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -12,7 +13,7 @@ export default function CalendarScreen({ onNavigate, events }) {
 
   // Date utilities
   const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay(); // Sunday=0, Monday=1...
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay(); // Sunday=0
 
   const today = new Date();
   const todayDay = today.getDate();
@@ -51,19 +52,43 @@ export default function CalendarScreen({ onNavigate, events }) {
     }
   };
 
-  const getUpcomingDaysText = (dateStr) => {
+  // Safe helper to parse any date string format (DD/MM/YYYY, YYYY-MM-DD, ISO)
+  const parseDateSafe = (dateStr) => {
     if (!dateStr) return null;
-    let eventDate;
+    if (typeof dateStr !== 'string') {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
     if (dateStr.includes('/')) {
       const parts = dateStr.split('/');
       if (parts.length === 3) {
-        eventDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+          return new Date(year, month, day);
+        }
       }
-    } else {
-      eventDate = new Date(dateStr);
+    } else if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+          return new Date(year, month, day);
+        }
+      }
     }
 
-    if (!eventDate || isNaN(eventDate.getTime())) return null;
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const getUpcomingDaysText = (dateStr) => {
+    const eventDate = parseDateSafe(dateStr);
+    if (!eventDate) return null;
 
     const todayMidnight = new Date(todayYear, todayMonth, todayDay);
     const eventMidnight = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
@@ -78,64 +103,59 @@ export default function CalendarScreen({ onNavigate, events }) {
     return `${Math.abs(diffDays)} days ago`;
   };
 
-  // Match events for a specific day in the selected month/year
-  const getEventsForDay = (day) => {
-    const dayStr = day.toString().padStart(2, '0');
-    const monthStr = (currentMonth + 1).toString().padStart(2, '0');
-    const dateKey = `${dayStr}/${monthStr}/${currentYear}`;
-    return (events || []).filter(e => e.date === dateKey);
-  };
+  // Group and format events by day for the selected month/year
+  const eventsByDay = React.useMemo(() => {
+    const lookup = {};
+    safeEvents.forEach(e => {
+      const d = parseDateSafe(e.date);
+      if (d && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+        const day = d.getDate();
+        if (!lookup[day]) {
+          lookup[day] = [];
+        }
+        lookup[day].push(e);
+      }
+    });
+    return lookup;
+  }, [safeEvents, currentMonth, currentYear]);
 
   const getCategoryColor = (category) => {
     if (category === 'Study Session') return 'bg-emerald-500';
     if (category === 'Exam') return 'bg-indigo-600';
     if (category === 'Assignment') return 'bg-cyan-500';
-    return 'bg-amber-400'; // Quiz
+    return 'bg-amber-400';
   };
 
   // Build grid blocks
-  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-  const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-  
-  const calendarCells = [];
-  // Offset slots
-  for (let i = 0; i < firstDay; i++) {
-    calendarCells.push({ day: '', isCurrent: false });
-  }
-  // Month days
-  for (let d = 1; d <= daysInMonth; d++) {
-    calendarCells.push({ day: d, isCurrent: true });
-  }
-  // Trailing empty slots to complete 7-column rows
-  const remainingCells = (7 - (calendarCells.length % 7)) % 7;
-  for (let i = 0; i < remainingCells; i++) {
-    calendarCells.push({ day: '', isCurrent: false });
-  }
+  const calendarCells = React.useMemo(() => {
+    const cells = [];
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
 
-  const parseEventDate = (dateStr) => {
-    if (!dateStr) return new Date(8640000000000000);
-    if (typeof dateStr === 'string' && dateStr.includes('/')) {
-      const parts = dateStr.split('/');
-      if (parts.length === 3) {
-        const day = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const year = parseInt(parts[2], 10);
-        return new Date(year, month, day);
-      }
+    for (let i = 0; i < firstDay; i++) {
+      cells.push({ day: '', isCurrent: false });
     }
-    const d = new Date(dateStr);
-    return isNaN(d.getTime()) ? new Date(8640000000000000) : d;
-  };
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ day: d, isCurrent: true });
+    }
+    const remainingCells = (7 - (cells.length % 7)) % 7;
+    for (let i = 0; i < remainingCells; i++) {
+      cells.push({ day: '', isCurrent: false });
+    }
+    return cells;
+  }, [currentYear, currentMonth]);
 
-  // Filter and sort events matching the selected month and year by closest date first
-  const filteredEventsForMonth = (events || []).filter(e => {
-    if (!e.date) return false;
-    const parts = e.date.split('/');
-    if (parts.length < 3) return false;
-    const eventMonth = parseInt(parts[1], 10) - 1;
-    const eventYear = parseInt(parts[2], 10);
-    return eventMonth === currentMonth && eventYear === currentYear;
-  }).sort((a, b) => parseEventDate(a.date) - parseEventDate(b.date));
+  // Filter & sort events matching current month
+  const filteredEventsForMonth = React.useMemo(() => {
+    return safeEvents.filter(e => {
+      const d = parseDateSafe(e.date);
+      return d && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    }).sort((a, b) => {
+      const da = parseDateSafe(a.date) || new Date(8640000000000000);
+      const db = parseDateSafe(b.date) || new Date(8640000000000000);
+      return da - db;
+    });
+  }, [safeEvents, currentMonth, currentYear]);
 
   const getCategoryBarConfig = (category) => {
     if (category === 'Quiz') {
@@ -170,10 +190,15 @@ export default function CalendarScreen({ onNavigate, events }) {
     };
   };
 
+  const statusBarPadding = Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0;
+
   return (
     <View style={tw`flex-grow flex-1 bg-[#F8FAFC]`}>
-      {/* Glass Header */}
-      <SafeAreaView style={tw`bg-white/80 backdrop-blur-md border-b border-slate-200/50`}>
+      {/* Glass Header with Android Status Bar Padding */}
+      <SafeAreaView style={[
+        tw`bg-white/80 backdrop-blur-md border-b border-slate-200/50`,
+        { paddingTop: statusBarPadding }
+      ]}>
         <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4`}>
           <TouchableOpacity 
             onPress={() => onNavigate('dashboard')}
@@ -195,7 +220,7 @@ export default function CalendarScreen({ onNavigate, events }) {
           </Text>
         </View>
 
-        {/* Calendar Grid Container (Frosted Glass Widget) */}
+        {/* Calendar Grid Container */}
         <View style={tw`bg-white border border-slate-200/80 rounded-[28px] p-5 shadow-sm shadow-indigo-500/5 mb-5`}>
           {/* Today's Date Banner */}
           <View style={tw`flex-row items-center justify-between bg-indigo-50 border border-indigo-100/80 px-4 py-2.5 rounded-2xl mb-4 shadow-xs`}>
@@ -239,7 +264,7 @@ export default function CalendarScreen({ onNavigate, events }) {
           {/* Day Blocks */}
           <View style={tw`flex-row flex-wrap justify-start`}>
             {calendarCells.map((cell, idx) => {
-              const dayEvents = cell.isCurrent ? getEventsForDay(cell.day) : [];
+              const dayEvents = cell.isCurrent ? (eventsByDay[cell.day] || []) : [];
               const hasEvents = dayEvents.length > 0;
               const dotColor = hasEvents ? getCategoryColor(dayEvents[0].category) : '';
               const isToday = cell.isCurrent && isCurrentMonthToday && cell.day === todayDay;
@@ -250,7 +275,7 @@ export default function CalendarScreen({ onNavigate, events }) {
                   style={[
                     tw`w-[13.5%] aspect-square items-center justify-center m-[0.3%] rounded-full`,
                     isToday 
-                      ? tw`bg-cyan-50 border-2 border border-cyan-500 shadow-sm` 
+                      ? tw`bg-cyan-50 border-2 border-cyan-500 shadow-sm` 
                       : cell.isCurrent ? tw`bg-slate-50/60 border border-slate-100` : tw`bg-transparent border-transparent`
                   ]}
                 >
@@ -277,13 +302,13 @@ export default function CalendarScreen({ onNavigate, events }) {
         </Text>
         
         {filteredEventsForMonth.length > 0 ? (
-          filteredEventsForMonth.map((event) => {
+          filteredEventsForMonth.map((event, idx) => {
             const catConfig = getCategoryBarConfig(event.category);
             const upcomingText = getUpcomingDaysText(event.date);
 
             return (
               <View 
-                key={event.id}
+                key={event.id || `event-${idx}`}
                 style={tw`bg-white/85 border border-slate-200/60 rounded-[24px] mb-4 shadow-sm shadow-indigo-500/5 overflow-hidden`}
               >
                 {/* Top Category Header Bar */}
@@ -331,10 +356,10 @@ export default function CalendarScreen({ onNavigate, events }) {
                       <View style={tw`flex-1 h-2.5 bg-slate-100 rounded-full mr-2.5 overflow-hidden`}>
                         <View style={[
                           tw`h-full rounded-full`, 
-                          { backgroundColor: '#4F46E5', width: `${event.progress}%` }
+                          { backgroundColor: '#4F46E5', width: `${event.progress || 0}%` }
                         ]} />
                       </View>
-                      <Text style={tw`text-[10px] font-bold text-slate-600 w-8 text-right`}>{event.progress}%</Text>
+                      <Text style={tw`text-[10px] font-bold text-slate-600 w-8 text-right`}>{event.progress || 0}%</Text>
                     </View>
                   </View>
                 </View>
@@ -351,3 +376,4 @@ export default function CalendarScreen({ onNavigate, events }) {
     </View>
   );
 }
+

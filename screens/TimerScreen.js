@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Platform, AppState } from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Platform, AppState, StatusBar } from 'react-native';
 import tw from 'twrnc';
 import { Feather, FontAwesome } from '@expo/vector-icons';
+
 
 export default function TimerScreen({
   onNavigate,
@@ -29,7 +30,8 @@ export default function TimerScreen({
   showCheatWarningRef,
   isSleepingCooldownRef,
   lastStartedTimeRef,
-  leftTimeRef
+  leftTimeRef,
+  isMenuOpen
 }) {
   const formatTime = (totalSeconds) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -91,7 +93,11 @@ export default function TimerScreen({
   return (
     <View style={tw`flex-grow flex-1 bg-[#F8FAFC]`}>
       {/* Glass Header */}
-      <SafeAreaView style={tw`bg-white/80 backdrop-blur-md border-b border-slate-200/50`}>
+      <SafeAreaView style={[
+        tw`bg-white/80 backdrop-blur-md border-b border-slate-200/50`,
+        { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0 }
+      ]}>
+
         <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4`}>
           <View style={tw`flex-row items-center`}>
             <TouchableOpacity 
@@ -292,30 +298,32 @@ export default function TimerScreen({
       </ScrollView>
 
       {/* Floating Glass Navigation Bar */}
-      <View style={tw`absolute bottom-6 left-6 right-6 bg-white/90 border border-white/80 rounded-full py-2.5 px-6 flex-row justify-between items-center shadow-xl shadow-indigo-500/10 backdrop-blur-lg`}>
-        {navItems.map((item) => {
-          const isActive = item.id === 'timer';
-          return (
-            <TouchableOpacity 
-              key={item.id} 
-              onPress={() => {
-                onNavigate(item.id);
-              }}
-              style={tw`items-center px-3`}
-            >
-              <View style={[
-                tw`p-2 rounded-full`,
-                isActive ? tw`bg-indigo-50 border border-indigo-100` : {}
-              ]}>
-                <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
-              </View>
-              <Text style={tw`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      {!isMenuOpen && (
+        <View style={tw`absolute bottom-6 left-6 right-6 bg-white/90 border border-white/80 rounded-full py-2.5 px-6 flex-row justify-between items-center shadow-xl shadow-indigo-500/10 backdrop-blur-lg`}>
+          {navItems.map((item) => {
+            const isActive = item.id === 'timer';
+            return (
+              <TouchableOpacity 
+                key={item.id} 
+                onPress={() => {
+                  onNavigate(item.id);
+                }}
+                style={tw`items-center px-3`}
+              >
+                <View style={[
+                  tw`p-2 rounded-full`,
+                  isActive ? tw`bg-indigo-50 border border-indigo-100` : {}
+                ]}>
+                  <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
+                </View>
+                <Text style={tw`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }

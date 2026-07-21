@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert, StatusBar } from 'react-native';
 import tw from 'twrnc';
 import { Feather } from '@expo/vector-icons';
+import { scheduleEventReminder } from '../services/notificationService';
+
 
 export default function AddEventScreen({ onAddEvent, onNavigate }) {
+
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
@@ -92,21 +95,28 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
     return dayCells;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+
     if (!title || !date) {
       Alert.alert("Required Fields", "Please enter both Event Title and Date.");
       return;
     }
     
-    onAddEvent({
+    const newEvent = {
       title,
       date,
       description,
       goal,
       category,
       progress: 0
-    });
+    };
+
+    // Schedule 1-day-prior mobile reminder notification
+    await scheduleEventReminder(newEvent);
+
+    onAddEvent(newEvent);
   };
+
 
   const navItems = [
     { id: 'dashboard', icon: 'home', label: 'Home' },
@@ -116,7 +126,11 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
   ];
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-[#F8FAFC]`}>
+    <SafeAreaView style={[
+      tw`flex-1 bg-[#F8FAFC]`,
+      { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0 }
+    ]}>
+
       {/* Glass Header */}
       <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white/80 border-b border-slate-200/60`}>
         <TouchableOpacity 

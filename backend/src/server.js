@@ -13,7 +13,15 @@ const app = express();
 app.use(cors()); // Allow requests from React Native apps
 app.use(express.json()); // Body parser
 
-// Basic Health Check
+// Basic Health Check & Root Route
+app.get('/', (req, res) => {
+  res.status(200).json({
+    message: 'StudyBuddy API Server is running!',
+    status: 'ok',
+    health: '/health'
+  });
+});
+
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -21,6 +29,7 @@ app.get('/health', (req, res) => {
     configured: config.isConfigured()
   });
 });
+
 
 // Register API Routers
 app.use('/api/auth', authRoutes);
@@ -35,11 +44,16 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-app.listen(config.port, () => {
-  console.log(`=========================================`);
-  console.log(` StudyBuddy Backend Service Started      `);
-  console.log(` Port: ${config.port}                     `);
-  console.log(` Health Check: http://localhost:${config.port}/health `);
-  console.log(` Configuration Loaded: ${config.isConfigured() ? 'SUCCESS' : 'WARNING (Using templates)'} `);
-  console.log(`=========================================`);
-});
+if (require.main === module) {
+  app.listen(config.port, () => {
+    console.log(`=========================================`);
+    console.log(` StudyBuddy Backend Service Started      `);
+    console.log(` Port: ${config.port}                     `);
+    console.log(` Health Check: http://localhost:${config.port}/health `);
+    console.log(` Configuration Loaded: ${config.isConfigured() ? 'SUCCESS' : 'WARNING (Using templates)'} `);
+    console.log(`=========================================`);
+  });
+}
+
+module.exports = app;
+

@@ -16,8 +16,109 @@ import ProgressScreen from './screens/ProgressScreen';
 import TimerScreen from './screens/TimerScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import CalendarScreen from './screens/CalendarScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { requestNotificationPermissions, scheduleEventReminder, cancelEventReminder } from './services/notificationService';
 
 export default function App() {
+  useEffect(() => {
+    requestNotificationPermissions();
+    restoreSession();
+  }, []);
+
+  const restoreSession = async () => {
+    try {
+      // 1. Instantly load cached events from storage
+      try {
+        let cachedEvents = null;
+        if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+          cachedEvents = localStorage.getItem('cached_events');
+        } else {
+          cachedEvents = await AsyncStorage.getItem('cached_events');
+        }
+        if (cachedEvents) {
+          setEvents(JSON.parse(cachedEvents));
+        }
+      } catch (cacheErr) {
+        console.warn('[App] Error loading cached events:', cacheErr);
+      }
+
+      let savedSession = null;
+      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+        savedSession = localStorage.getItem('study_buddy_session');
+      } else {
+        savedSession = await AsyncStorage.getItem('study_buddy_session');
+      }
+
+      if (savedSession) {
+        const { user, token: savedToken } = JSON.parse(savedSession);
+        if (savedToken && user) {
+          setUsername(user.fullName || user.email || 'Student');
+          setToken(savedToken);
+          setCurrentScreen('dashboard');
+          fetchEvents(savedToken);
+        }
+      }
+    } catch (err) {
+      console.warn('[App] Error restoring session:', err);
+    }
+  };
+
+  const saveSession = async (user, sessionToken) => {
+    try {
+      const data = JSON.stringify({ user, token: sessionToken });
+      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+        localStorage.setItem('study_buddy_session', data);
+      } else {
+        await AsyncStorage.setItem('study_buddy_session', data);
+      }
+    } catch (err) {
+      console.warn('[App] Failed to save session:', err);
+    }
+  };
+
+  const clearSession = async () => {
+    try {
+      if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+        localStorage.removeItem('study_buddy_session');
+      } else {
+        await AsyncStorage.removeItem('study_buddy_session');
+      }
+    } catch (err) {
+      console.warn('[App] Failed to clear session:', err);
+    }
+  };
+
+  const handleLogout = async () => {
+    closeMenu();
+    setToken(null);
+    setUsername('Jane Doe');
+    setEvents([]);
+    setChatMessages([
+      { id: 1, sender: 'bot', text: 'Hi! I am your study buddy. How may I help you today?', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    ]);
+    setCurrentScreen('login');
+    await clearSession();
+  };
+
+  const handleLogin = (user, sessionToken) => {
+    const displayName = user?.fullName || user?.email || 'Student';
+    setUsername(displayName);
+    setToken(sessionToken);
+    setCurrentScreen('dashboard');
+    fetchEvents(sessionToken);
+    saveSession({ fullName: displayName, email: user?.email }, sessionToken);
+  };
+
+  const handleSignup = (user, sessionToken) => {
+    const displayName = user?.fullName || user?.email || 'Student';
+    setUsername(displayName);
+    setToken(sessionToken);
+    setCurrentScreen('dashboard');
+    fetchEvents(sessionToken);
+    saveSession({ fullName: displayName, email: user?.email }, sessionToken);
+  };
+
+
   const FAVICON_DATA_URL = "data:image/png;base64,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";
 
   React.useEffect(() => {
@@ -261,6 +362,17 @@ export default function App() {
       const data = await response.json();
       if (response.ok) {
         setEvents(data);
+        // Persist to offline cache
+        try {
+          const stringified = JSON.stringify(data);
+          if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+            localStorage.setItem('cached_events', stringified);
+          } else {
+            await AsyncStorage.setItem('cached_events', stringified);
+          }
+        } catch (cacheErr) {
+          console.warn('[App] Failed to cache events:', cacheErr);
+        }
       } else {
         console.error('[App] Fetch events failed:', data.error);
       }
@@ -283,21 +395,8 @@ export default function App() {
     setCurrentScreen(screen);
   };
 
-  const handleLogin = (user, sessionToken) => {
-    setUsername(user.fullName);
-    setToken(sessionToken);
-    setCurrentScreen('dashboard');
-    fetchEvents(sessionToken);
-  };
-
-  const handleSignup = (user, sessionToken) => {
-    setUsername(user.fullName);
-    setToken(sessionToken);
-    setCurrentScreen('dashboard');
-    fetchEvents(sessionToken);
-  };
-
   const handleAddEvent = async (newEvent) => {
+
     let subTasks = [];
     if (newEvent.category === 'Exam') {
       subTasks = [
@@ -341,7 +440,35 @@ export default function App() {
 
       const data = await response.json();
       if (response.ok) {
-        setEvents((prev) => [data, ...prev]);
+        setEvents((prev) => {
+          const updated = [data, ...prev];
+          (async () => {
+            try {
+              const stringified = JSON.stringify(updated);
+              if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+                localStorage.setItem('cached_events', stringified);
+              } else {
+                await AsyncStorage.setItem('cached_events', stringified);
+              }
+            } catch (cacheErr) {
+              console.warn('[App] Failed to update offline events cache:', cacheErr);
+            }
+
+            // Schedule a local notification reminder
+            try {
+              const notificationId = await scheduleEventReminder(data);
+              if (notificationId) {
+                const storedMap = await AsyncStorage.getItem('event_notification_map');
+                const map = storedMap ? JSON.parse(storedMap) : {};
+                map[data.id] = notificationId;
+                await AsyncStorage.setItem('event_notification_map', JSON.stringify(map));
+              }
+            } catch (notifErr) {
+              console.warn('[App] Failed to schedule event reminder:', notifErr);
+            }
+          })();
+          return updated;
+        });
         setCurrentScreen('dashboard');
       } else {
         Alert.alert("Error", data.error || "Failed to create event");
@@ -361,7 +488,38 @@ export default function App() {
         }
       });
       if (response.ok) {
-        setEvents((prev) => prev.filter((event) => event.id !== id));
+        setEvents((prev) => {
+          const updated = prev.filter((event) => event.id !== id);
+          (async () => {
+            try {
+              const stringified = JSON.stringify(updated);
+              if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+                localStorage.setItem('cached_events', stringified);
+              } else {
+                await AsyncStorage.setItem('cached_events', stringified);
+              }
+            } catch (cacheErr) {
+              console.warn('[App] Failed to update offline events cache:', cacheErr);
+            }
+
+            // Cancel any scheduled notification reminder
+            try {
+              const storedMap = await AsyncStorage.getItem('event_notification_map');
+              if (storedMap) {
+                const map = JSON.parse(storedMap);
+                const notificationId = map[id];
+                if (notificationId) {
+                  await cancelEventReminder(notificationId);
+                  delete map[id];
+                  await AsyncStorage.setItem('event_notification_map', JSON.stringify(map));
+                }
+              }
+            } catch (notifErr) {
+              console.warn('[App] Failed to cancel event reminder:', notifErr);
+            }
+          })();
+          return updated;
+        });
       } else {
         const data = await response.json();
         Alert.alert("Error", data.error || "Failed to delete event");
@@ -420,16 +578,7 @@ export default function App() {
     setCurrentScreen('dashboard');
   };
 
-  const handleLogout = () => {
-    setUsername('Jane Doe');
-    setToken(null);
-    setEvents([]);
-    setChatMessages([
-      { id: 1, sender: 'bot', text: 'Hi! I am your study buddy. How may I help you today?', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
-    ]);
-    setCurrentScreen('login');
-    setIsMenuOpen(false);
-  };
+
 
   const openMenu = () => {
     setIsMenuOpen(true);
@@ -486,6 +635,7 @@ export default function App() {
             onNavigate={handleNavigate} 
             onOpenMenu={openMenu}
             username={username}
+            isMenuOpen={isMenuOpen}
           />
         );
       case 'add_event':
@@ -499,6 +649,7 @@ export default function App() {
             chatMessages={chatMessages}
             setChatMessages={setChatMessages}
             isSleepingCooldown={isSleepingCooldown}
+            isMenuOpen={isMenuOpen}
           />
         );
       case 'progress':
@@ -508,6 +659,7 @@ export default function App() {
             onUpdateSubTaskProgress={handleUpdateSubTaskProgress}
             onNavigate={handleNavigate} 
             onOpenMenu={openMenu} 
+            isMenuOpen={isMenuOpen}
           />
         );
       case 'timer':
@@ -539,6 +691,7 @@ export default function App() {
             isSleepingCooldownRef={isSleepingCooldownRef}
             lastStartedTimeRef={lastStartedTimeRef}
             leftTimeRef={leftTimeRef}
+            isMenuOpen={isMenuOpen}
           />
         );
       case 'edit_profile':

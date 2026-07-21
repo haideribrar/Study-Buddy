@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StatusBar } from 'react-native';
 import tw from 'twrnc';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config';
@@ -41,7 +41,11 @@ export default function EditProfileScreen({ username, onSaveProfile, onNavigate,
   };
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-[#F8FAFC]`}>
+    <SafeAreaView style={[
+      tw`flex-1 bg-[#F8FAFC]`,
+      { paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0 }
+    ]}>
+
       {/* Header */}
       <View style={tw`flex-row items-center justify-between px-6 pt-3 pb-4 bg-white/80 border-b border-slate-200/60`}>
         <TouchableOpacity 

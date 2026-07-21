@@ -39,6 +39,31 @@ router.post('/chat', requireAuth, async (req, res) => {
       userText = messages[messages.length - 1].content;
     }
 
+    // Check message limit (max 30 daily messages)
+    let messageCount = 0;
+    try {
+      messageCount = await supabaseService.getUserMessageCountToday(req.user.id, req.token);
+    } catch (countErr) {
+      console.warn('[AI Route] Failed to check message count, proceeding:', countErr.message);
+    }
+
+    if (messageCount >= 30) {
+      // 2. Save user message first so it registers in their history
+      if (userText) {
+        await supabaseService.saveChatMessage(req.user.id, 'user', userText, req.token);
+      }
+      // 3. Define the limit reached warning response
+      const warningText = "You have reached your limit of 30 messages for today. I will respond tomorrow!";
+      // 4. Save bot warning response to database
+      await supabaseService.saveChatMessage(req.user.id, 'bot', warningText, req.token);
+
+      return res.status(200).json({
+        success: true,
+        text: warningText,
+        provider: 'limit-guard'
+      });
+    }
+
     // 2. Save the user's message to the database
     if (userText) {
       await supabaseService.saveChatMessage(req.user.id, 'user', userText, req.token);
