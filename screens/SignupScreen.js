@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import tw from 'twrnc';
 import { Feather, FontAwesome } from '@expo/vector-icons';
+import { API_BASE_URL } from '../config';
+
+const showAlert = (title, message, buttons) => {
+  if (Platform.OS === 'web') {
+    alert(`${title}: ${message}`);
+    if (buttons && buttons[0] && buttons[0].onPress) {
+      buttons[0].onPress();
+    }
+  } else {
+    Alert.alert(title, message, buttons);
+  }
+};
 
 export default function SignupScreen({ onNavigate, onSignup }) {
   const [fullName, setFullName] = useState('');
@@ -10,48 +22,107 @@ export default function SignupScreen({ onNavigate, onSignup }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resetHint, setResetHint] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSignup = () => {
-    onSignup(fullName || 'User');
+  const handleSignup = async () => {
+    setErrorMessage('');
+    if (!fullName.trim() || !email.trim() || !password.trim() || !confirmPassword.trim() || !resetHint.trim()) {
+      setErrorMessage("Please fill in all fields, including the reset hint.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setErrorMessage("Password must be at least 8 characters long.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // 1. Sign up the user
+      const signupResponse = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password, fullName, resetHint })
+      });
+
+      const signupData = await signupResponse.json();
+
+      if (!signupResponse.ok) {
+        throw new Error(signupData.error || 'Sign up failed');
+      }
+
+      // 2. Perform auto-login to retrieve token and user profile
+      const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const loginData = await loginResponse.json();
+
+      if (!loginResponse.ok) {
+        throw new Error(loginData.error || 'Auto-login failed');
+      }
+
+      onSignup(loginData.user, loginData.token);
+    } catch (err) {
+      setErrorMessage(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-[#FDF6EC]`}>
+    <SafeAreaView style={tw`flex-1 bg-[#F8FAFC]`}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={tw`flex-1`}
       >
-        <ScrollView contentContainerStyle={tw`flex-grow justify-center px-6 py-12`}>
-          <View style={tw`items-center mb-8`}>
-            <View style={tw`w-20 h-20 bg-[#FF7C5C] rounded-full items-center justify-center shadow-md mb-3`}>
-              <FontAwesome name="smile-o" size={44} color="#FFFFFF" />
+        <ScrollView contentContainerStyle={tw`flex-grow justify-center px-6 py-6`}>
+          <View style={tw`items-center mb-5`}>
+            <View style={tw`w-16 h-16 bg-indigo-50 border border-indigo-100 rounded-full items-center justify-center shadow-xs mb-2`}>
+              <FontAwesome name="smile-o" size={32} color="#4F46E5" />
             </View>
-            <Text style={tw`text-2xl font-extrabold text-slate-800 tracking-tight`}>Create Account</Text>
-            <Text style={tw`text-xs text-slate-450 mt-1 font-bold uppercase tracking-wider`}>Begin your focused study program 🌸</Text>
+            <Text style={tw`text-xl font-extrabold text-slate-900 tracking-tight`}>Create Account</Text>
+            <Text style={tw`text-[9px] text-indigo-600 mt-0.5 font-extrabold uppercase tracking-widest`}>Begin your focused study program</Text>
           </View>
 
-          {/* Headspace Signup Panel */}
-          <View style={tw`bg-white border border-[#F5EBE1] rounded-[32px] p-6 shadow-sm`}>
+          {/* Glass Signup Panel */}
+          <View style={tw`bg-white border border-slate-200/80 rounded-[28px] p-5.5 shadow-lg shadow-indigo-500/5`}>
             {/* Full Name Input */}
-            <View style={tw`mb-4`}>
-              <Text style={tw`text-[10px] font-bold text-[#FF7C5C] mb-1.5 uppercase tracking-wider`}>Full Name</Text>
-              <View style={tw`flex-row items-center bg-[#FDF6EC]/40 border border-[#F5EBE1] rounded-2xl px-4 py-3`}>
-                <Feather name="user" size={15} color="#94A3B8" style={tw`mr-3`} />
+            <View style={tw`mb-3`}>
+              <Text style={tw`text-[10px] font-bold text-indigo-600 mb-1 uppercase tracking-wider`}>Full Name</Text>
+              <View style={tw`flex-row items-center bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5`}>
+                <Feather name="user" size={15} color="#4F46E5" style={tw`mr-2.5`} />
                 <TextInput
                   placeholder="Enter your name"
                   placeholderTextColor="#94A3B8"
                   value={fullName}
                   onChangeText={setFullName}
-                  style={tw`flex-1 text-slate-700 text-sm`}
+                  style={[
+                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
+                  ]}
                 />
               </View>
             </View>
 
             {/* Email Input */}
-            <View style={tw`mb-4`}>
-              <Text style={tw`text-[10px] font-bold text-[#FF7C5C] mb-1.5 uppercase tracking-wider`}>Email Address</Text>
-              <View style={tw`flex-row items-center bg-[#FDF6EC]/40 border border-[#F5EBE1] rounded-2xl px-4 py-3`}>
-                <Feather name="mail" size={15} color="#94A3B8" style={tw`mr-3`} />
+            <View style={tw`mb-3`}>
+              <Text style={tw`text-[10px] font-bold text-indigo-600 mb-1 uppercase tracking-wider`}>Email Address</Text>
+              <View style={tw`flex-row items-center bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5`}>
+                <Feather name="mail" size={15} color="#4F46E5" style={tw`mr-2.5`} />
                 <TextInput
                   placeholder="Enter your email"
                   placeholderTextColor="#94A3B8"
@@ -59,16 +130,37 @@ export default function SignupScreen({ onNavigate, onSignup }) {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  style={tw`flex-1 text-slate-700 text-sm`}
+                  style={[
+                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
+                  ]}
+                />
+              </View>
+            </View>
+
+            {/* Password Reset Hint Input */}
+            <View style={tw`mb-3`}>
+              <Text style={tw`text-[10px] font-bold text-indigo-600 mb-1 uppercase tracking-wider`}>Password Reset Hint</Text>
+              <View style={tw`flex-row items-center bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5`}>
+                <Feather name="help-circle" size={15} color="#4F46E5" style={tw`mr-2.5`} />
+                <TextInput
+                  placeholder="e.g. Your first pet's name"
+                  placeholderTextColor="#94A3B8"
+                  value={resetHint}
+                  onChangeText={setResetHint}
+                  style={[
+                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
+                  ]}
                 />
               </View>
             </View>
 
             {/* Password Input */}
-            <View style={tw`mb-4`}>
-              <Text style={tw`text-[10px] font-bold text-[#FF7C5C] mb-1.5 uppercase tracking-wider`}>Password</Text>
-              <View style={tw`flex-row items-center bg-[#FDF6EC]/40 border border-[#F5EBE1] rounded-2xl px-4 py-3`}>
-                <Feather name="lock" size={15} color="#94A3B8" style={tw`mr-3`} />
+            <View style={tw`mb-3`}>
+              <Text style={tw`text-[10px] font-bold text-indigo-600 mb-1 uppercase tracking-wider`}>Password</Text>
+              <View style={tw`flex-row items-center bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5`}>
+                <Feather name="lock" size={15} color="#4F46E5" style={tw`mr-2.5`} />
                 <TextInput
                   placeholder="Create a password"
                   placeholderTextColor="#94A3B8"
@@ -76,7 +168,10 @@ export default function SignupScreen({ onNavigate, onSignup }) {
                   value={password}
                   onChangeText={setPassword}
                   autoCapitalize="none"
-                  style={tw`flex-1 text-slate-700 text-sm`}
+                  style={[
+                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
+                  ]}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                   {showPassword ? (
@@ -89,18 +184,21 @@ export default function SignupScreen({ onNavigate, onSignup }) {
             </View>
 
             {/* Confirm Password Input */}
-            <View style={tw`mb-6`}>
-              <Text style={tw`text-[10px] font-bold text-[#FF7C5C] mb-1.5 uppercase tracking-wider`}>Confirm Password</Text>
-              <View style={tw`flex-row items-center bg-[#FDF6EC]/40 border border-[#F5EBE1] rounded-2xl px-4 py-3`}>
-                <Feather name="lock" size={15} color="#94A3B8" style={tw`mr-3`} />
+            <View style={tw`mb-3`}>
+              <Text style={tw`text-[10px] font-bold text-indigo-600 mb-1 uppercase tracking-wider`}>Confirm Password</Text>
+              <View style={tw`flex-row items-center bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-2.5`}>
+                <Feather name="lock" size={15} color="#4F46E5" style={tw`mr-2.5`} />
                 <TextInput
                   placeholder="Confirm your password"
                   placeholderTextColor="#94A3B8"
                   secureTextEntry={!showConfirmPassword}
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(val) => { setConfirmPassword(val); setErrorMessage(''); }}
                   autoCapitalize="none"
-                  style={tw`flex-1 text-slate-700 text-sm`}
+                  style={[
+                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
+                  ]}
                 />
                 <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
                   {showConfirmPassword ? (
@@ -112,37 +210,38 @@ export default function SignupScreen({ onNavigate, onSignup }) {
               </View>
             </View>
 
+            {/* Inline Error Message */}
+            {errorMessage ? (
+              <View style={tw`bg-red-50 border border-red-200/80 rounded-2xl px-4 py-2 mb-3 flex-row items-center`}>
+                <Feather name="alert-circle" size={14} color="#EF4444" style={tw`mr-2`} />
+                <Text style={tw`text-red-600 font-bold text-xs flex-1`}>{errorMessage}</Text>
+              </View>
+            ) : null}
+
             {/* Sign Up Button */}
             <TouchableOpacity
               onPress={handleSignup}
-              style={tw`bg-[#FF7C5C] rounded-full py-3.5 items-center shadow-md shadow-[#FF7C5C]/10`}
+              disabled={isLoading}
+              style={[
+                tw`rounded-full py-3.5 px-6 items-center justify-center shadow-md mb-3.5`,
+                { backgroundColor: '#4F46E5' },
+                isLoading ? tw`opacity-60` : {}
+              ]}
             >
-              <Text style={tw`text-white font-bold text-sm tracking-wide`}>Sign Up</Text>
+              {isLoading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={tw`text-white font-extrabold text-sm tracking-wide text-center`}>Sign Up</Text>
+              )}
             </TouchableOpacity>
 
-            {/* OR Separator */}
-            <View style={tw`flex-row items-center my-4`}>
-              <View style={tw`flex-1 h-[1px] bg-slate-100`} />
-              <Text style={tw`text-[10px] font-bold text-slate-400 px-3 uppercase`}>OR</Text>
-              <View style={tw`flex-1 h-[1px] bg-slate-100`} />
+            {/* Login Navigation Link inside Card */}
+            <View style={tw`flex-row justify-center items-center pt-1 border-t border-slate-100`}>
+              <Text style={tw`text-slate-500 text-xs font-semibold`}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => onNavigate('login')}>
+                <Text style={tw`text-xs font-bold text-indigo-600`}>Login</Text>
+              </TouchableOpacity>
             </View>
-
-            {/* Google Signup */}
-            <TouchableOpacity
-              onPress={handleSignup}
-              style={tw`flex-row items-center justify-center border border-slate-200 bg-white rounded-full py-3 shadow-sm`}
-            >
-              <Feather name="chrome" size={15} color="#475569" style={tw`mr-2`} />
-              <Text style={tw`text-slate-655 font-bold text-sm text-slate-600`}>Sign Up with Google</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Login Navigation Link */}
-          <View style={tw`flex-row justify-center mt-8`}>
-            <Text style={tw`text-slate-400 text-sm font-semibold`}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => onNavigate('login')}>
-              <Text style={tw`text-sm font-bold text-[#FF7C5C]`}>Login</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
