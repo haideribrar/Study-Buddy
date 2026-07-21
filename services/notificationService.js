@@ -95,7 +95,7 @@ export async function scheduleEventReminder(event) {
         data: { eventId: event.id, title: event.title },
       },
       trigger: {
-        date: triggerDate,
+        seconds: Math.max(1, Math.round((triggerDate.getTime() - Date.now()) / 1000)),
       },
     });
 
