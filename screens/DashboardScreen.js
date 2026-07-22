@@ -26,6 +26,7 @@ export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate
   const processedEvents = React.useMemo(() => {
     const safeEvents = Array.isArray(events) ? events : [];
     return [...safeEvents]
+      .filter((e) => e && typeof e === 'object')
       .map((e) => ({
         ...e,
         parsedDate: parseEventDate(e.date),

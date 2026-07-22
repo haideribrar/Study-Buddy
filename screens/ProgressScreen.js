@@ -24,7 +24,9 @@ export default function ProgressScreen({ onNavigate, onOpenMenu, events, onUpdat
 
   // Filter events by category tab and sort by closest due date first
   const getCategoryEvents = () => {
-    return (events || []).filter(event => {
+    return (events || [])
+      .filter((event) => event && typeof event === 'object')
+      .filter(event => {
       if (activeTab === 'Quiz') return event.category === 'Quiz';
       if (activeTab === 'Assignment') return event.category === 'Assignment';
       if (activeTab === 'Exams') return event.category === 'Exam';
