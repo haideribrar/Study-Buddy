@@ -42,7 +42,7 @@ export async function requestNotificationPermissions() {
 function parseEventDate(dateStr) {
   if (!dateStr) return null;
   
-  if (dateStr.includes('/')) {
+  if (typeof dateStr === 'string' && dateStr.includes('/')) {
     const parts = dateStr.split('/');
     if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
@@ -50,7 +50,7 @@ function parseEventDate(dateStr) {
       const year = parseInt(parts[2], 10);
       return new Date(year, month, day, 9, 0, 0); // Default to 9:00 AM on event day
     }
-  } else if (dateStr.includes('-')) {
+  } else if (typeof dateStr === 'string' && dateStr.includes('-')) {
     const parts = dateStr.split('-');
     if (parts.length === 3) {
       const year = parseInt(parts[0], 10);

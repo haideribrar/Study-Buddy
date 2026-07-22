@@ -144,7 +144,7 @@ export default function ProgressScreen({ onNavigate, onOpenMenu, events, onUpdat
                     {/* Inner progress bar status */}
                     <View style={tw`flex-row items-center`}>
                       <View style={tw`flex-grow h-2.5 bg-slate-100 rounded-full mr-2.5 overflow-hidden`}>
-                        <View style={[tw`h-full rounded-full`, { backgroundColor: '#4F46E5', width: `${subTask.progress}%` }]} />
+                        <View style={[tw`h-full rounded-full`, { backgroundColor: '#4F46E5', width: `${subTask.progress || 0}%` }]} />
                       </View>
                       <Text style={tw`text-[10px] font-bold text-slate-600 w-8 text-right`}>{subTask.progress}%</Text>
                     </View>

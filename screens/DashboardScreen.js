@@ -230,7 +230,7 @@ export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate
                       <View style={tw`flex-1 h-2.5 bg-slate-100 rounded-full mr-2.5 overflow-hidden`}>
                         <View style={[
                           tw`h-full rounded-full`, 
-                          { backgroundColor: '#4F46E5', width: `${event.progress}%` }
+                          { backgroundColor: '#4F46E5', width: `${event.progress || 0}%` }
                         ]} />
                       </View>
                       <Text style={tw`text-[10px] font-bold text-slate-600 w-8 text-right`}>{event.progress}%</Text>
