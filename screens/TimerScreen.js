@@ -31,7 +31,9 @@ export default function TimerScreen({
   isSleepingCooldownRef,
   lastStartedTimeRef,
   leftTimeRef,
-  isMenuOpen
+  isMenuOpen,
+  onConfirmFocusLock,
+  onFailFocusSession
 }) {
   const formatTime = (totalSeconds) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -144,41 +146,36 @@ export default function TimerScreen({
                 </View>
               </View>
             ) : (
-              /* Active 10-Second Rescue Warning Countdown */
+              /* Deep Focus Interruption Prompt */
               <View style={tw`items-center w-full`}>
-                <View style={tw`w-16 h-16 bg-amber-50 border border-amber-100 rounded-full items-center justify-center mb-3 shadow-xs`}>
-                  <Text style={tw`text-3xl`}>😴</Text>
+                <View style={tw`w-16 h-16 bg-amber-50 border border-amber-100 rounded-full items-center justify-center mb-3.5 shadow-xs`}>
+                  <Text style={tw`text-3xl`}>👀</Text>
                 </View>
                 
-                {/* 10s countdown display */}
-                <View style={tw`bg-rose-50 border border-rose-100 rounded-full px-4 py-1 mb-3 shadow-xs`}>
-                  <Text style={tw`text-lg font-extrabold text-rose-500`}>00:{warningSecondsLeft.toString().padStart(2, '0')}</Text>
-                </View>
-
-                <Text style={tw`text-sm font-bold text-slate-900 mb-1 text-center`}>
-                  Study Buddy is Getting Sleepy! 💤
+                <Text style={tw`text-base font-bold text-slate-900 mb-1 text-center`}>
+                  Focus Interrupted!
                 </Text>
-                <Text style={tw`text-slate-500 text-[11px] text-center leading-relaxed font-medium mb-5 px-1`}>
-                  Return to the app before the 10-second timer expires or Buddy will fall asleep for 10 minutes!
+                <Text style={tw`text-slate-500 text-xs text-center leading-relaxed font-medium mb-6 px-1`}>
+                  We noticed the app was in the background for {warningSecondsLeft} seconds. Did you lock your screen to focus, or did you switch apps?
                 </Text>
 
-                {/* Upper Option: Rescue Focus */}
+                {/* Option 1: Locked screen */}
                 <TouchableOpacity
-                  onPress={handleResumeSaveStreak}
+                  onPress={onConfirmFocusLock}
                   style={[tw`w-full rounded-full py-3.5 items-center shadow-md mb-3`, { backgroundColor: '#4F46E5' }]}
                 >
-                  <Text style={tw`text-white font-bold text-xs uppercase tracking-wide`}>
-                    🛡️ Resume Focus & Keep Buddy Awake
+                  <Text style={tw`text-white font-extrabold text-xs uppercase tracking-wider`}>
+                    🔒 I locked my screen to study
                   </Text>
                 </TouchableOpacity>
 
-                {/* Lower Option: Reset Timer */}
+                {/* Option 2: Cheated / Switched apps */}
                 <TouchableOpacity
-                  onPress={handleReset}
-                  style={tw`w-full bg-slate-50 border border-slate-200/80 rounded-full py-3.5 items-center shadow-xs`}
+                  onPress={onFailFocusSession}
+                  style={tw`w-full bg-rose-50 border border-rose-100 rounded-full py-3.5 items-center shadow-xs`}
                 >
-                  <Text style={tw`text-slate-700 font-bold text-xs uppercase tracking-wide`}>
-                    Reset Session
+                  <Text style={tw`text-rose-600 font-extrabold text-xs uppercase tracking-wider`}>
+                    📱 I switched apps / exited
                   </Text>
                 </TouchableOpacity>
               </View>

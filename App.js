@@ -231,47 +231,59 @@ export default function App() {
       isDeepFocusRef.current &&
       !isSleepingCooldownRef.current
     ) {
-      if (!showCheatWarningRef.current) {
-        if (leftTimeRef.current === 0) {
-          leftTimeRef.current = Date.now();
-        }
-        showCheatWarningRef.current = true;
-        setShowCheatWarning(true);
-        setWarningSecondsLeft(10);
-        setStreakLost(false);
+      if (leftTimeRef.current === 0) {
+        leftTimeRef.current = Date.now();
       }
-      setCurrentScreen('timer');
     }
   };
 
-  // Real-time calculation checker for Warning Countdown & 10m Sleep Cooldown
-  const checkFocusGuardStatus = () => {
-    // 1. Check if Cheat Warning / Exit Timer is active
-    if (showCheatWarningRef.current && leftTimeRef.current > 0 && !isSleepingCooldownRef.current) {
+  const handleConfirmFocusLock = () => {
+    if (leftTimeRef.current > 0) {
       const elapsedSec = Math.floor((Date.now() - leftTimeRef.current) / 1000);
-      const remaining = 10 - elapsedSec;
+      setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
+      leftTimeRef.current = 0;
+    }
+    setShowCheatWarning(false);
+    showCheatWarningRef.current = false;
+  };
 
-      if (remaining <= 0) {
-        // 10 seconds expired! Buddy falls asleep!
-        leftTimeRef.current = 0;
-        setIsTimerRunning(false);
-        isTimerRunningRef.current = false;
-        setShowCheatWarning(false);
-        showCheatWarningRef.current = false;
-        setStreakLost(true);
+  const handleFailFocusSession = () => {
+    leftTimeRef.current = 0;
+    setIsTimerRunning(false);
+    isTimerRunningRef.current = false;
+    setShowCheatWarning(false);
+    showCheatWarningRef.current = false;
+    setStreakLost(true);
 
-        // Start 10-minute sleep cooldown
-        isSleepingCooldownRef.current = true;
-        setIsSleepingCooldown(true);
-        sleepStartTimeRef.current = Date.now();
-        setSleepCooldownSeconds(10 * 60);
-        setWarningSecondsLeft(0);
+    // Start 10-minute sleep cooldown
+    isSleepingCooldownRef.current = true;
+    setIsSleepingCooldown(true);
+    sleepStartTimeRef.current = Date.now();
+    setSleepCooldownSeconds(10 * 60);
+  };
+
+  const handleReturnFocus = () => {
+    if (leftTimeRef.current > 0) {
+      const elapsedSec = Math.floor((Date.now() - leftTimeRef.current) / 1000);
+      
+      if (elapsedSec > 10) {
+        // Warn the user with verification options upon return
+        setWarningSecondsLeft(elapsedSec);
+        setShowCheatWarning(true);
+        showCheatWarningRef.current = true;
+        setCurrentScreen('timer');
       } else {
-        setWarningSecondsLeft(remaining);
+        // Quick exit <10s: count as continuous study and sync timer
+        setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
+        leftTimeRef.current = 0;
       }
     }
+    checkFocusGuardStatus();
+  };
 
-    // 2. Check if 10-Minute Sleep Cooldown is active
+  // Real-time calculation checker for 10m Sleep Cooldown
+  const checkFocusGuardStatus = () => {
+    // Check if 10-Minute Sleep Cooldown is active
     if (isSleepingCooldownRef.current && sleepStartTimeRef.current > 0) {
       const sleepElapsedSec = Math.floor((Date.now() - sleepStartTimeRef.current) / 1000);
       const sleepRemaining = (10 * 60) - sleepElapsedSec;
@@ -301,10 +313,6 @@ export default function App() {
 
   // Cross-Platform Global Focus Guard Event Listener (Web & Mobile/iOS)
   useEffect(() => {
-    const handleReturnFocus = () => {
-      checkFocusGuardStatus();
-    };
-
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const handleVisibility = () => {
         if (document.hidden) {
@@ -696,6 +704,8 @@ export default function App() {
             lastStartedTimeRef={lastStartedTimeRef}
             leftTimeRef={leftTimeRef}
             isMenuOpen={isMenuOpen}
+            onConfirmFocusLock={handleConfirmFocusLock}
+            onFailFocusSession={handleFailFocusSession}
           />
         );
       case 'edit_profile':

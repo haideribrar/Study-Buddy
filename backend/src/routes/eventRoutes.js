@@ -25,6 +25,18 @@ router.get('/', async (req, res) => {
  * @desc    Create a new study event for the student
  */
 router.post('/', async (req, res) => {
+  const { title, date, category } = req.body;
+  
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: 'Event title is required.' });
+  }
+  if (!date || !date.trim()) {
+    return res.status(400).json({ error: 'Event date is required.' });
+  }
+  if (!category || !category.trim()) {
+    return res.status(400).json({ error: 'Event category is required.' });
+  }
+
   try {
     const newEvent = await supabaseService.createUserEvent(req.user.id, req.body, req.token);
     return res.status(201).json(newEvent);
