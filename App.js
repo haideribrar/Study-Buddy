@@ -36,7 +36,10 @@ export default function App() {
           cachedEvents = await AsyncStorage.getItem('cached_events');
         }
         if (cachedEvents) {
-          setEvents(JSON.parse(cachedEvents));
+          const parsed = JSON.parse(cachedEvents);
+          if (Array.isArray(parsed)) {
+            setEvents(parsed);
+          }
         }
       } catch (cacheErr) {
         console.warn('[App] Error loading cached events:', cacheErr);
@@ -360,7 +363,7 @@ export default function App() {
         }
       });
       const data = await response.json();
-      if (response.ok) {
+      if (response.ok && Array.isArray(data)) {
         setEvents(data);
         // Persist to offline cache
         try {
@@ -374,7 +377,8 @@ export default function App() {
           console.warn('[App] Failed to cache events:', cacheErr);
         }
       } else {
-        console.error('[App] Fetch events failed:', data.error);
+        console.error('[App] Fetch events failed or returned non-array:', data);
+        setEvents([]);
       }
     } catch (err) {
       console.error('[App] Network error fetching events:', err.message);

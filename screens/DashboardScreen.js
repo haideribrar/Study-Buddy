@@ -24,7 +24,8 @@ export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate
 
   // Memoized, processed, and sorted events (closest due date first)
   const processedEvents = React.useMemo(() => {
-    return [...events]
+    const safeEvents = Array.isArray(events) ? events : [];
+    return [...safeEvents]
       .map((e) => ({
         ...e,
         parsedDate: parseEventDate(e.date),
@@ -130,7 +131,7 @@ export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate
       <ScrollView style={tw`flex-1`} contentContainerStyle={tw`px-6 pt-6 pb-32`}>
         {/* Glass Hero Banner */}
         <View style={[tw`rounded-[28px] p-6 mb-6.5 shadow-xl relative overflow-hidden`, { backgroundColor: '#4F46E5' }]}>
-          <Text style={tw`text-white text-xl font-bold mb-1.5`}>Welcome Back, {username.split(' ')[0]}! ✨</Text>
+          <Text style={tw`text-white text-xl font-bold mb-1.5`}>Welcome Back, {(username || 'Student').split(' ')[0]}! ✨</Text>
           <Text style={tw`text-indigo-100 text-xs mb-4.5 leading-relaxed font-medium`}>
             Your AI Study Buddy is online and ready to help you prepare for exams, summarize notes, or solve problems.
           </Text>
