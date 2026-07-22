@@ -385,6 +385,11 @@ export default function App() {
           console.warn('[App] Failed to cache events:', cacheErr);
         }
       } else {
+        if (response.status === 401) {
+          handleLogout();
+          Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+          return;
+        }
         console.error('[App] Fetch events failed or returned non-array:', data);
         setEvents([]);
       }
@@ -483,6 +488,11 @@ export default function App() {
         });
         setCurrentScreen('dashboard');
       } else {
+        if (response.status === 401) {
+          handleLogout();
+          Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+          return;
+        }
         Alert.alert("Error", data.error || "Failed to create event");
       }
     } catch (err) {
@@ -533,6 +543,11 @@ export default function App() {
           return updated;
         });
       } else {
+        if (response.status === 401) {
+          handleLogout();
+          Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+          return;
+        }
         const data = await response.json();
         Alert.alert("Error", data.error || "Failed to delete event");
       }
@@ -578,6 +593,11 @@ export default function App() {
           progress: avgProgress,
           subTasks: updatedSubTasks
         })
+      }).then(res => {
+        if (res.status === 401) {
+          handleLogout();
+          Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+        }
       }).catch((err) => {
         console.error('[App] Progress update sync error:', err.message);
       });
@@ -662,6 +682,7 @@ export default function App() {
             setChatMessages={setChatMessages}
             isSleepingCooldown={isSleepingCooldown}
             isMenuOpen={isMenuOpen}
+            onLogout={handleLogout}
           />
         );
       case 'progress':

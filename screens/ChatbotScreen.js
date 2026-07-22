@@ -23,7 +23,7 @@ const renderMessageText = (text, isBot) => {
   });
 };
 
-export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessages, setChatMessages, isSleepingCooldown, isMenuOpen }) {
+export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessages, setChatMessages, isSleepingCooldown, isMenuOpen, onLogout }) {
   const [internalMessages, setInternalMessages] = useState([
     { id: 1, sender: 'bot', text: 'Hi! I am your study buddy. How may I help you today?', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
   ]);
@@ -46,7 +46,10 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
           cached = await AsyncStorage.getItem('cached_chat_history');
         }
         if (cached) {
-          setMessages(JSON.parse(cached));
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            setMessages(parsed);
+          }
         }
       } catch (cacheErr) {
         console.warn('[ChatbotScreen] Error loading cached chat history:', cacheErr);
@@ -61,7 +64,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
           }
         });
         const data = await response.json();
-        if (response.ok && data.length > 0) {
+        if (response.ok && Array.isArray(data) && data.length > 0) {
           const formatted = data.map(m => ({
             id: m.id,
             sender: m.sender,
@@ -159,6 +162,11 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401 && onLogout) {
+          onLogout();
+          Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+          return;
+        }
         throw new Error(data.error || 'Failed to generate AI response');
       }
 

@@ -34,8 +34,8 @@ class GeminiProvider extends AIProvider {
   async generate(messages, systemInstruction) {
     const genAI = new GoogleGenerativeAI(config.geminiApiKey);
     
-    // Default model: gemini-2.5-flash (since 1.5-flash is retired/deprecated)
-    const modelOptions = { model: 'gemini-2.5-flash' };
+    // Default model: gemini-1.5-flash
+    const modelOptions = { model: 'gemini-1.5-flash' };
     if (systemInstruction) {
       modelOptions.systemInstruction = systemInstruction;
     }
