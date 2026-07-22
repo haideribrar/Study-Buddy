@@ -83,8 +83,12 @@ export default function App() {
     try {
       if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
         localStorage.removeItem('study_buddy_session');
+        localStorage.removeItem('cached_events');
+        localStorage.removeItem('cached_chat_history');
       } else {
         await AsyncStorage.removeItem('study_buddy_session');
+        await AsyncStorage.removeItem('cached_events');
+        await AsyncStorage.removeItem('cached_chat_history');
       }
     } catch (err) {
       console.warn('[App] Failed to clear session:', err);
