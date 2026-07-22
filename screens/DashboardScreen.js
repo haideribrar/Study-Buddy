@@ -38,7 +38,7 @@ export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate
   const getUpcomingDaysText = (dateStr) => {
     if (!dateStr) return null;
     let eventDate;
-    if (dateStr.includes('/')) {
+    if (typeof dateStr === 'string' && dateStr.includes('/')) {
       const parts = dateStr.split('/');
       if (parts.length === 3) {
         eventDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
