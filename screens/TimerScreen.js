@@ -255,9 +255,9 @@ export default function TimerScreen({
                   isDeepFocusRef.current = nextDeep;
                   setIsDeepFocus(nextDeep);
                 }}
-                style={tw`w-12 h-7 rounded-full p-0.5 justify-center border border-slate-200 ${
+                style={tw(`w-12 h-7 rounded-full p-0.5 justify-center border border-slate-200 ${
                   isDeepFocus ? 'bg-indigo-600 items-end' : 'bg-slate-200 items-start'
-                }`}
+                }`)}
               >
                 <View style={tw`w-5.5 h-5.5 bg-white rounded-full shadow-xs`} />
               </TouchableOpacity>
@@ -274,9 +274,9 @@ export default function TimerScreen({
             <TouchableOpacity
               onPress={handleReset}
               disabled={!isRunning && secondsLeft === customDuration}
-              style={tw`w-11 h-11 bg-slate-50 border border-slate-200/80 rounded-full items-center justify-center shadow-xs ${
+              style={tw(`w-11 h-11 bg-slate-50 border border-slate-200/80 rounded-full items-center justify-center shadow-xs ${
                 !isRunning && secondsLeft === customDuration ? 'opacity-40' : 'opacity-100'
-              }`}
+              }`)}
             >
               <Feather name="rotate-ccw" size={16} color="#64748B" />
             </TouchableOpacity>
@@ -313,7 +313,7 @@ export default function TimerScreen({
                 ]}>
                   <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
                 </View>
-                <Text style={tw`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+                <Text style={tw(`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`)}>
                   {item.label}
                 </Text>
               </TouchableOpacity>
