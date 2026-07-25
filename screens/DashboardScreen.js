@@ -189,9 +189,9 @@ export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate
                 {/* Top Category Header Bar */}
                 <View style={[
                   tw`px-4 py-2 flex-row items-center justify-between`,
-                  tw(`${catConfig.barBg} ${catConfig.borderColor}`)
+                  tw.style(`${catConfig.barBg} ${catConfig.borderColor}`)
                 ]}>
-                  <Text style={tw(`text-[10px] font-extrabold uppercase tracking-wider ${catConfig.textColor}`)}>
+                  <Text style={tw.style(`text-[10px] font-extrabold uppercase tracking-wider ${catConfig.textColor}`)}>
                     {catConfig.label}
                   </Text>
                   {upcomingText ? (
@@ -269,7 +269,7 @@ export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate
                 ]}>
                   <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
                 </View>
-                <Text style={tw(`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`)}>
+                <Text style={tw.style(`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`)}>
                   {item.label}
                 </Text>
               </TouchableOpacity>

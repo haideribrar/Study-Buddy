@@ -99,7 +99,7 @@ export default function ProgressScreen({ onNavigate, onOpenMenu, events, onUpdat
                   : tw`bg-white border-slate-200/80`
               ]}
             >
-              <Text style={tw(`text-[10px] ${isSelected ? 'text-indigo-700 font-extrabold' : 'text-slate-600 font-semibold'}`)}>
+              <Text style={tw.style(`text-[10px] ${isSelected ? 'text-indigo-700 font-extrabold' : 'text-slate-600 font-semibold'}`)}>
                 {tab}
               </Text>
             </TouchableOpacity>
@@ -191,7 +191,7 @@ export default function ProgressScreen({ onNavigate, onOpenMenu, events, onUpdat
                 ]}>
                   <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
                 </View>
-                <Text style={tw(`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`)}>
+                <Text style={tw.style(`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`)}>
                   {item.label}
                 </Text>
               </TouchableOpacity>

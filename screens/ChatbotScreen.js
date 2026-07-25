@@ -14,7 +14,7 @@ const renderMessageText = (text, isBot) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       const boldText = part.slice(2, -2);
       return (
-        <Text key={index} style={tw(`font-extrabold ${isBot ? 'text-slate-900' : 'text-white'}`)}>
+        <Text key={index} style={tw.style(`font-extrabold ${isBot ? 'text-slate-900' : 'text-white'}`)}>
           {boldText}
         </Text>
       );
@@ -254,7 +254,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
             return (
               <View 
                 key={msg.id}
-                style={tw(`flex-row mb-5 ${isBot ? 'justify-start' : 'justify-end'}`)}
+                style={tw.style(`flex-row mb-5 ${isBot ? 'justify-start' : 'justify-end'}`)}
               >
                 {/* Bot Icon */}
                 {isBot && (
@@ -272,10 +272,10 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
                       : [tw`rounded-tr-xs shadow-md`, { backgroundColor: '#4F46E5' }]
                   ]}
                 >
-                  <Text style={tw(`text-sm font-medium leading-relaxed ${isBot ? 'text-slate-800' : 'text-white'}`)}>
+                  <Text style={tw.style(`text-sm font-medium leading-relaxed ${isBot ? 'text-slate-800' : 'text-white'}`)}>
                     {renderMessageText(msg.text, isBot)}
                   </Text>
-                  <Text style={tw(`text-[9px] mt-1.5 text-right font-semibold ${isBot ? 'text-slate-400' : 'text-indigo-100'}`)}>
+                  <Text style={tw.style(`text-[9px] mt-1.5 text-right font-semibold ${isBot ? 'text-slate-400' : 'text-indigo-100'}`)}>
                     {msg.time}
                   </Text>
                 </View>
@@ -343,7 +343,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
                 ]}>
                   <Feather name={item.icon} size={18} color={isActive ? '#6366F1' : '#94A3B8'} />
                 </View>
-                <Text style={tw(`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`)}>
+                <Text style={tw.style(`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`)}>
                   {item.label}
                 </Text>
               </TouchableOpacity>

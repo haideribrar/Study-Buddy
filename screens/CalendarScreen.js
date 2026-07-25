@@ -286,13 +286,13 @@ export default function CalendarScreen({ onNavigate, events = [] }) {
                         : cell.isCurrent ? tw`bg-slate-50/60 border border-slate-100` : tw`bg-transparent`
                     ]}
                   >
-                    <Text style={tw(`text-xs font-bold ${isToday ? 'text-cyan-700 font-extrabold' : cell.isCurrent ? 'text-slate-800' : 'text-slate-300'}`)}>
+                    <Text style={tw.style(`text-xs font-bold ${isToday ? 'text-cyan-700 font-extrabold' : cell.isCurrent ? 'text-slate-800' : 'text-slate-300'}`)}>
                       {cell.day}
                     </Text>
                     {hasEvents && (
                       <View style={[
                         tw`absolute bottom-1 w-1.5 h-1.5 rounded-full`,
-                        isToday ? tw`bg-cyan-500` : tw(dotColor)
+                        isToday ? tw`bg-cyan-500` : tw.style(dotColor)
                       ]} />
                     )}
                   </View>
@@ -320,9 +320,9 @@ export default function CalendarScreen({ onNavigate, events = [] }) {
                 {/* Top Category Header Bar */}
                 <View style={[
                   tw`px-4 py-2 flex-row items-center justify-between`,
-                  tw(`${catConfig.barBg} ${catConfig.borderColor}`)
+                  tw.style(`${catConfig.barBg} ${catConfig.borderColor}`)
                 ]}>
-                  <Text style={tw(`text-[10px] font-extrabold uppercase tracking-wider ${catConfig.textColor}`)}>
+                  <Text style={tw.style(`text-[10px] font-extrabold uppercase tracking-wider ${catConfig.textColor}`)}>
                     {catConfig.label}
                   </Text>
                   {upcomingText ? (
