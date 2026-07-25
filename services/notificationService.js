@@ -77,12 +77,35 @@ export async function scheduleEventReminder(event) {
     const eventDate = parseEventDate(event.date);
     if (!eventDate) return null;
 
-    // Calculate 1 day prior (24 hours before event time)
-    const reminderDate = new Date(eventDate.getTime() - 24 * 60 * 60 * 1000);
+    // Calculate calendar day difference to schedule:
+    // - Today: immediately (5 seconds)
+    // - Tomorrow: 1 minute later (60 seconds)
+    // - Future: 1 day before the event date
     const now = new Date();
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const eventMidnight = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+    
+    const diffTime = eventMidnight - todayMidnight;
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-    // If 1 day prior has already passed, schedule 1 hour from now for testing/immediate reminder
-    const triggerDate = reminderDate > now ? reminderDate : new Date(now.getTime() + 60 * 1000);
+    let triggerDate;
+
+    if (diffDays < 0) {
+      // Past date: do not schedule
+      return null;
+    } else if (diffDays === 0) {
+      // Today: send immediately (5 seconds from now)
+      triggerDate = new Date(now.getTime() + 5 * 1000);
+    } else if (diffDays === 1) {
+      // Tomorrow: send 1 minute later (60 seconds from now)
+      triggerDate = new Date(now.getTime() + 60 * 1000);
+    } else {
+      // Future: send 1 day before the event
+      triggerDate = new Date(eventDate.getTime() - 24 * 60 * 60 * 1000);
+      if (triggerDate <= now) {
+        triggerDate = new Date(now.getTime() + 60 * 1000);
+      }
+    }
 
     const isExam = event.category?.toLowerCase() === 'exam' || event.title?.toLowerCase().includes('exam');
     const categoryName = isExam ? 'Exam 📚' : `${event.category || 'Event'} 📅`;

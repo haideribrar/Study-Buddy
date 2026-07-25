@@ -230,13 +230,12 @@ export default function App() {
   const triggerFocusGuard = () => {
     if (Date.now() - lastStartedTimeRef.current < 500) return;
 
-    if (
-      isTimerRunningRef.current &&
-      isDeepFocusRef.current &&
-      !isSleepingCooldownRef.current
-    ) {
+    if (isTimerRunningRef.current && !isSleepingCooldownRef.current) {
       if (leftTimeRef.current === 0) {
         leftTimeRef.current = Date.now();
+      }
+      if (isDeepFocusRef.current) {
+        setIsTimerRunning(false);
       }
     }
   };
@@ -249,6 +248,7 @@ export default function App() {
     }
     setShowCheatWarning(false);
     showCheatWarningRef.current = false;
+    setIsTimerRunning(true); // Resume timer
   };
 
   const handleFailFocusSession = () => {
@@ -270,14 +270,21 @@ export default function App() {
     if (leftTimeRef.current > 0) {
       const elapsedSec = Math.floor((Date.now() - leftTimeRef.current) / 1000);
       
-      if (elapsedSec > 10) {
-        // Warn the user with verification options upon return
-        setWarningSecondsLeft(elapsedSec);
-        setShowCheatWarning(true);
-        showCheatWarningRef.current = true;
-        setCurrentScreen('timer');
+      if (isDeepFocusRef.current) {
+        if (elapsedSec > 10) {
+          // Warn the user with verification options upon return
+          setWarningSecondsLeft(elapsedSec);
+          setShowCheatWarning(true);
+          showCheatWarningRef.current = true;
+          setCurrentScreen('timer');
+        } else {
+          // Quick exit <10s: count as continuous study and sync timer
+          setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
+          setIsTimerRunning(true); // Resume timer
+          leftTimeRef.current = 0;
+        }
       } else {
-        // Quick exit <10s: count as continuous study and sync timer
+        // Normal focus: just deduct elapsed time
         setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
         leftTimeRef.current = 0;
       }
@@ -403,16 +410,6 @@ export default function App() {
   };
 
   const handleNavigate = (screen) => {
-    if (
-      isTimerRunningRef.current &&
-      isDeepFocusRef.current &&
-      !isSleepingCooldownRef.current &&
-      screen !== 'timer'
-    ) {
-      triggerFocusGuard();
-      setCurrentScreen('timer');
-      return;
-    }
     setCurrentScreen(screen);
   };
 
@@ -777,7 +774,7 @@ export default function App() {
           {/* Side Drawer Body - Frosted Glass Styled */}
           <Animated.View style={[
             tw`w-72 h-full bg-white/95 border-r border-white/70 shadow-2xl z-50`,
-            { transform: [{ translateX: slideAnim }] }
+            { transform: [{ translateX: slideAnim }], elevation: 100000 }
           ]}>
             <SafeAreaView style={tw`flex-1`}>
               <View style={tw`flex-1 p-6 justify-between`}>
@@ -863,6 +860,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 99999,
+    elevation: 99999, // Android elevation support to prevent bleed-through
     flexDirection: 'row',
   }
 });

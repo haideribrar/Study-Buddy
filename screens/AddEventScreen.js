@@ -64,9 +64,15 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
       const dateStr = `${dayStr}/${monthStr}/${calendarYear}`;
       const isSelected = date === dateStr;
 
+      const cellDate = new Date(calendarYear, calendarMonth, day);
+      const today = new Date();
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const isPast = cellDate < todayMidnight;
+
       dayCells.push(
         <TouchableOpacity
           key={`day-${day}`}
+          disabled={isPast}
           onPress={() => {
             setDate(dateStr);
             setShowCalendar(false);
@@ -77,7 +83,11 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
             tw`w-8 h-8 items-center justify-center rounded-full`,
             isSelected ? [tw`shadow-xs`, { backgroundColor: '#4F46E5' }] : tw`bg-transparent`
           ]}>
-            <Text style={tw.style(`text-xs font-semibold ${isSelected ? 'text-white font-extrabold' : 'text-slate-700'}`)}>
+            <Text style={tw.style(`text-xs font-semibold ${
+              isSelected 
+                ? 'text-white font-extrabold' 
+                : isPast ? 'text-slate-300 line-through' : 'text-slate-700'
+            }`)}>
               {day}
             </Text>
           </View>
@@ -95,11 +105,40 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
     return dayCells;
   };
 
+  const parseDateSafe = (dateStr) => {
+    if (!dateStr) return null;
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+          return new Date(year, month, day);
+        }
+      }
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
   const handleSubmit = async () => {
 
     if (!title || !date) {
       Alert.alert("Required Fields", "Please enter both Event Title and Date.");
       return;
+    }
+
+    const eventDate = parseDateSafe(date);
+    if (eventDate) {
+      const today = new Date();
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const eventMidnight = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+      
+      if (eventMidnight < todayMidnight) {
+        Alert.alert("Invalid Date", "You cannot schedule events in the past. Please select today or a future date.");
+        return;
+      }
     }
     
     const newEvent = {
