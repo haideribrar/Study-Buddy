@@ -27,6 +27,11 @@ export async function requestNotificationPermissions() {
 
     if (finalStatus !== 'granted') {
       console.log('[NotificationService] Permission not granted for notifications');
+      Alert.alert(
+        "Notifications Disabled",
+        "Please enable notification permissions in your device settings to receive study reminders.",
+        [{ text: "OK" }]
+      );
       return false;
     }
 

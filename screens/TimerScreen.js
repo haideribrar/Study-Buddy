@@ -149,33 +149,30 @@ export default function TimerScreen({
               /* Deep Focus Interruption Prompt */
               <View style={tw`items-center w-full`}>
                 <View style={tw`w-16 h-16 bg-amber-50 border border-amber-100 rounded-full items-center justify-center mb-3.5 shadow-xs`}>
-                  <Text style={tw`text-3xl`}>👀</Text>
+                  <Text style={tw`text-3xl`}>⚠️</Text>
                 </View>
                 
                 <Text style={tw`text-base font-bold text-slate-900 mb-1 text-center`}>
-                  Focus Interrupted!
+                  Are you still studying?
                 </Text>
-                <Text style={tw`text-slate-500 text-xs text-center leading-relaxed font-medium mb-6 px-1`}>
-                  We noticed the app was in the background for {warningSecondsLeft} seconds. Did you lock your screen to focus, or did you switch apps?
+                <Text style={tw`text-slate-500 text-xs text-center leading-relaxed font-medium mb-4 px-1`}>
+                  You left the app! Tap the button below within {warningSecondsLeft} seconds, or Study Buddy will fall asleep for 10 minutes.
                 </Text>
 
-                {/* Option 1: Locked screen */}
+                {/* 10-Second Countdown Display */}
+                <View style={tw`bg-amber-50 border border-amber-200 rounded-full px-6 py-2 mb-5 shadow-xs`}>
+                  <Text style={tw`text-2xl font-extrabold text-amber-600`}>
+                    00:{warningSecondsLeft.toString().padStart(2, '0')}
+                  </Text>
+                </View>
+
+                {/* Confirm study button */}
                 <TouchableOpacity
                   onPress={onConfirmFocusLock}
-                  style={[tw`w-full rounded-full py-3.5 items-center shadow-md mb-3`, { backgroundColor: '#4F46E5' }]}
+                  style={[tw`w-full rounded-full py-3.5 items-center shadow-md`, { backgroundColor: '#4F46E5' }]}
                 >
                   <Text style={tw`text-white font-extrabold text-xs uppercase tracking-wider`}>
-                    🔒 I locked my screen to study
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Option 2: Cheated / Switched apps */}
-                <TouchableOpacity
-                  onPress={onFailFocusSession}
-                  style={tw`w-full bg-rose-50 border border-rose-100 rounded-full py-3.5 items-center shadow-xs`}
-                >
-                  <Text style={tw`text-rose-600 font-extrabold text-xs uppercase tracking-wider`}>
-                    📱 I switched apps / exited
+                    🙋 I am back!
                   </Text>
                 </TouchableOpacity>
               </View>

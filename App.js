@@ -227,6 +227,25 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isTimerRunning, timerSecondsLeft, showCheatWarning, isSleepingCooldown]);
 
+  // Warning countdown timer effect
+  useEffect(() => {
+    let interval = null;
+    if (showCheatWarning && warningSecondsLeft > 0 && !streakLost && !isSleepingCooldown) {
+      interval = setInterval(() => {
+        setWarningSecondsLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            // Fail focus session automatically!
+            handleFailFocusSession();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [showCheatWarning, warningSecondsLeft, streakLost, isSleepingCooldown]);
+
   // Trigger Focus Guard (Exit Warning)
   const triggerFocusGuard = async () => {
     console.log(`[FocusGuard] triggerFocusGuard called. isTimerRunning = ${isTimerRunningRef.current}, isDeepFocus = ${isDeepFocusRef.current}, leftTime = ${leftTimeRef.current}`);
@@ -323,51 +342,18 @@ export default function App() {
       }
 
       if (isDeepFocusRef.current) {
-        if (isNativeLockSupported) {
-          if (screenWasOff) {
-            // Screen locked: let study continue normally
-            console.log(`[FocusGuard] Valid lock screen study. Deducting ${elapsedSec}s from timer.`);
-            setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
-            leftTimeRef.current = 0;
-          } else {
-            // App switched: check if elapsed time exceeds 10s grace period
-            if (elapsedSec > 10) {
-              console.log("[FocusGuard] Switched apps for >10s. Failing focus immediately.");
-              leftTimeRef.current = 0;
-              setIsTimerRunning(false);
-              isTimerRunningRef.current = false;
-              setStreakLost(true);
-
-              // Cooldown active
-              isSleepingCooldownRef.current = true;
-              setIsSleepingCooldown(true);
-              sleepStartTimeRef.current = Date.now();
-              setSleepCooldownSeconds(10 * 60);
-
-              Alert.alert(
-                "Focus Broken ⚠️",
-                "You left the app! Study Buddy fell asleep and is in a 10-minute sleep cooldown.",
-                [{ text: "OK" }]
-              );
-            } else {
-              console.log(`[FocusGuard] Switched apps but returned within 10s. Deducting ${elapsedSec}s.`);
-              setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
-              leftTimeRef.current = 0;
-            }
-          }
+        if (isNativeLockSupported && screenWasOff) {
+          // Screen locked: study continues normally in the background
+          console.log(`[FocusGuard] Valid lock screen study. Deducting ${elapsedSec}s from timer.`);
+          setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
+          leftTimeRef.current = 0;
         } else {
-          // Web/iOS fallback: ask them using warning screen
-          if (elapsedSec > 10) {
-            console.log(`[FocusGuard] Elapsed > 10s (fallback). Showing cheat warning.`);
-            setWarningSecondsLeft(elapsedSec);
-            setShowCheatWarning(true);
-            showCheatWarningRef.current = true;
-            setCurrentScreen('timer');
-          } else {
-            console.log(`[FocusGuard] Elapsed <= 10s (fallback). Resuming study.`);
-            setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
-            leftTimeRef.current = 0;
-          }
+          // App switched (or Web/iOS fallback): trigger 10-second warning countdown screen!
+          console.log(`[FocusGuard] Interruption detected. Initiating 10s countdown.`);
+          setWarningSecondsLeft(10);
+          setShowCheatWarning(true);
+          showCheatWarningRef.current = true;
+          setCurrentScreen('timer');
         }
       } else {
         // Normal focus: just deduct elapsed time
