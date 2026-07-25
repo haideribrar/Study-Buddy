@@ -228,13 +228,19 @@ export default function App() {
 
   // Trigger Focus Guard (Exit Warning)
   const triggerFocusGuard = () => {
-    if (Date.now() - lastStartedTimeRef.current < 500) return;
+    console.log(`[FocusGuard] triggerFocusGuard called. isTimerRunning = ${isTimerRunningRef.current}, isDeepFocus = ${isDeepFocusRef.current}, leftTime = ${leftTimeRef.current}`);
+    if (Date.now() - lastStartedTimeRef.current < 500) {
+      console.log(`[FocusGuard] triggerFocusGuard returned early (recent start).`);
+      return;
+    }
 
     if (isTimerRunningRef.current && !isSleepingCooldownRef.current) {
       if (leftTimeRef.current === 0) {
         leftTimeRef.current = Date.now();
+        console.log(`[FocusGuard] Set leftTimeRef to ${leftTimeRef.current}`);
       }
       if (isDeepFocusRef.current) {
+        console.log(`[FocusGuard] Deep Focus active: Pausing timer.`);
         setIsTimerRunning(false);
       }
     }
@@ -267,24 +273,26 @@ export default function App() {
   };
 
   const handleReturnFocus = () => {
+    console.log(`[FocusGuard] handleReturnFocus called. leftTime = ${leftTimeRef.current}, isDeepFocus = ${isDeepFocusRef.current}`);
     if (leftTimeRef.current > 0) {
       const elapsedSec = Math.floor((Date.now() - leftTimeRef.current) / 1000);
+      console.log(`[FocusGuard] Time elapsed away from app: ${elapsedSec}s`);
       
       if (isDeepFocusRef.current) {
         if (elapsedSec > 10) {
-          // Warn the user with verification options upon return
+          console.log(`[FocusGuard] Elapsed > 10s. Showing cheat warning.`);
           setWarningSecondsLeft(elapsedSec);
           setShowCheatWarning(true);
           showCheatWarningRef.current = true;
           setCurrentScreen('timer');
         } else {
-          // Quick exit <10s: count as continuous study and sync timer
+          console.log(`[FocusGuard] Elapsed <= 10s. Resuming study.`);
           setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
           setIsTimerRunning(true); // Resume timer
           leftTimeRef.current = 0;
         }
       } else {
-        // Normal focus: just deduct elapsed time
+        console.log(`[FocusGuard] Normal Focus: Deducting ${elapsedSec}s from timer.`);
         setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
         leftTimeRef.current = 0;
       }

@@ -29,6 +29,17 @@ export async function requestNotificationPermissions() {
       console.log('[NotificationService] Permission not granted for notifications');
       return false;
     }
+
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#4F46E5',
+      });
+      console.log('[NotificationService] Android notification channel created.');
+    }
+
     return true;
   } catch (error) {
     console.warn('[NotificationService] Error requesting permissions:', error);
@@ -115,6 +126,7 @@ export async function scheduleEventReminder(event) {
         title: `Upcoming ${categoryName} Tomorrow!`,
         body: `Reminder: You have "${event.title}" scheduled for tomorrow. Time to review your notes!`,
         sound: true,
+        channelId: 'default',
         data: { eventId: event.id, title: event.title },
       },
       trigger: {
