@@ -22,20 +22,6 @@ export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate
     return isNaN(d.getTime()) ? new Date(8640000000000000) : d;
   };
 
-  // Memoized, processed, and sorted events (closest due date first)
-  const processedEvents = React.useMemo(() => {
-    const safeEvents = Array.isArray(events) ? events : [];
-    return [...safeEvents]
-      .filter((e) => e && typeof e === 'object')
-      .map((e) => ({
-        ...e,
-        parsedDate: parseEventDate(e.date),
-        upcomingText: getUpcomingDaysText(e.date),
-        catConfig: getCategoryBarConfig(e.category),
-      }))
-      .sort((a, b) => a.parsedDate - b.parsedDate);
-  }, [events]);
-
   const getUpcomingDaysText = (dateStr) => {
     if (!dateStr) return null;
     let eventDate;
@@ -96,6 +82,20 @@ export default function DashboardScreen({ events = [], onDeleteEvent, onNavigate
       label: 'Study Session 🧠'
     };
   };
+
+  // Memoized, processed, and sorted events (closest due date first)
+  const processedEvents = React.useMemo(() => {
+    const safeEvents = Array.isArray(events) ? events : [];
+    return [...safeEvents]
+      .filter((e) => e && typeof e === 'object')
+      .map((e) => ({
+        ...e,
+        parsedDate: parseEventDate(e.date),
+        upcomingText: getUpcomingDaysText(e.date),
+        catConfig: getCategoryBarConfig(e.category),
+      }))
+      .sort((a, b) => a.parsedDate - b.parsedDate);
+  }, [events]);
 
   const navItems = [
     { id: 'dashboard', icon: 'home', label: 'Home' },
