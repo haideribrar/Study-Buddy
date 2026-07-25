@@ -461,36 +461,36 @@ export default function App() {
 
       const data = await response.json();
       if (response.ok) {
-        setEvents((prev) => {
-          const updated = [data, ...prev];
-          (async () => {
-            try {
-              const stringified = JSON.stringify(updated);
-              if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
-                localStorage.setItem('cached_events', stringified);
-              } else {
-                await AsyncStorage.setItem('cached_events', stringified);
-              }
-            } catch (cacheErr) {
-              console.warn('[App] Failed to update offline events cache:', cacheErr);
-            }
-
-            // Schedule a local notification reminder
-            try {
-              const notificationId = await scheduleEventReminder(data);
-              if (notificationId) {
-                const storedMap = await AsyncStorage.getItem('event_notification_map');
-                const map = storedMap ? JSON.parse(storedMap) : {};
-                map[data.id] = notificationId;
-                await AsyncStorage.setItem('event_notification_map', JSON.stringify(map));
-              }
-            } catch (notifErr) {
-              console.warn('[App] Failed to schedule event reminder:', notifErr);
-            }
-          })();
-          return updated;
-        });
+        setEvents((prev) => [data, ...prev]);
         setCurrentScreen('dashboard');
+
+        // Execute side effects asynchronously outside the React state setter callback
+        (async () => {
+          try {
+            const updated = [data, ...events];
+            const stringified = JSON.stringify(updated);
+            if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+              localStorage.setItem('cached_events', stringified);
+            } else {
+              await AsyncStorage.setItem('cached_events', stringified);
+            }
+          } catch (cacheErr) {
+            console.warn('[App] Failed to update offline events cache:', cacheErr);
+          }
+
+          // Schedule a local notification reminder
+          try {
+            const notificationId = await scheduleEventReminder(data);
+            if (notificationId) {
+              const storedMap = await AsyncStorage.getItem('event_notification_map');
+              const map = storedMap ? JSON.parse(storedMap) : {};
+              map[data.id] = notificationId;
+              await AsyncStorage.setItem('event_notification_map', JSON.stringify(map));
+            }
+          } catch (notifErr) {
+            console.warn('[App] Failed to schedule event reminder:', notifErr);
+          }
+        })();
       } else {
         if (response.status === 401) {
           handleLogout();
@@ -514,38 +514,38 @@ export default function App() {
         }
       });
       if (response.ok) {
-        setEvents((prev) => {
-          const updated = prev.filter((event) => event.id !== id);
-          (async () => {
-            try {
-              const stringified = JSON.stringify(updated);
-              if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
-                localStorage.setItem('cached_events', stringified);
-              } else {
-                await AsyncStorage.setItem('cached_events', stringified);
-              }
-            } catch (cacheErr) {
-              console.warn('[App] Failed to update offline events cache:', cacheErr);
-            }
+        setEvents((prev) => prev.filter((event) => event.id !== id));
 
-            // Cancel any scheduled notification reminder
-            try {
-              const storedMap = await AsyncStorage.getItem('event_notification_map');
-              if (storedMap) {
-                const map = JSON.parse(storedMap);
-                const notificationId = map[id];
-                if (notificationId) {
-                  await cancelEventReminder(notificationId);
-                  delete map[id];
-                  await AsyncStorage.setItem('event_notification_map', JSON.stringify(map));
-                }
-              }
-            } catch (notifErr) {
-              console.warn('[App] Failed to cancel event reminder:', notifErr);
+        // Execute side effects asynchronously outside the React state setter callback
+        (async () => {
+          try {
+            const updated = events.filter((event) => event.id !== id);
+            const stringified = JSON.stringify(updated);
+            if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+              localStorage.setItem('cached_events', stringified);
+            } else {
+              await AsyncStorage.setItem('cached_events', stringified);
             }
-          })();
-          return updated;
-        });
+          } catch (cacheErr) {
+            console.warn('[App] Failed to update offline events cache:', cacheErr);
+          }
+
+          // Cancel any scheduled notification reminder
+          try {
+            const storedMap = await AsyncStorage.getItem('event_notification_map');
+            if (storedMap) {
+              const map = JSON.parse(storedMap);
+              const notificationId = map[id];
+              if (notificationId) {
+                await cancelEventReminder(notificationId);
+                delete map[id];
+                await AsyncStorage.setItem('event_notification_map', JSON.stringify(map));
+              }
+            }
+          } catch (notifErr) {
+            console.warn('[App] Failed to cancel event reminder:', notifErr);
+          }
+        })();
       } else {
         if (response.status === 401) {
           handleLogout();

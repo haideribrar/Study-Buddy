@@ -77,7 +77,7 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
             tw`w-8 h-8 items-center justify-center rounded-full`,
             isSelected ? [tw`shadow-xs`, { backgroundColor: '#4F46E5' }] : tw`bg-transparent`
           ]}>
-            <Text style={tw`text-xs font-semibold ${isSelected ? 'text-white font-extrabold' : 'text-slate-700'}`}>
+            <Text style={tw(`text-xs font-semibold ${isSelected ? 'text-white font-extrabold' : 'text-slate-700'}`)}>
               {day}
             </Text>
           </View>
@@ -110,9 +110,6 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
       category,
       progress: 0
     };
-
-    // Schedule 1-day-prior mobile reminder notification
-    await scheduleEventReminder(newEvent);
 
     onAddEvent(newEvent);
   };
@@ -173,7 +170,7 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
                 onPress={() => setShowCalendar(!showCalendar)}
                 style={tw`flex-row items-center justify-between bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3.5`}
               >
-                <Text style={tw`text-sm text-slate-800 ${date ? 'font-semibold' : 'text-slate-400'}`}>
+                <Text style={tw(`text-sm text-slate-800 ${date ? 'font-semibold' : 'text-slate-400'}`)}>
                   {date || 'Select from calendar picker'}
                 </Text>
                 <Feather name="calendar" size={16} color="#4F46E5" />
@@ -301,7 +298,7 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
               ]}>
                 <Feather name={item.icon} size={18} color={isActive ? '#4F46E5' : '#94A3B8'} />
               </View>
-              <Text style={tw`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`}>
+              <Text style={tw(`text-[9px] mt-0.5 font-bold ${isActive ? 'text-indigo-600' : 'text-slate-400'}`)}>
                 {item.label}
               </Text>
             </TouchableOpacity>

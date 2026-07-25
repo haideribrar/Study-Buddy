@@ -107,6 +107,7 @@ export default function CalendarScreen({ onNavigate, events = [] }) {
   const eventsByDay = React.useMemo(() => {
     const lookup = {};
     safeEvents.forEach(e => {
+      if (!e || typeof e !== 'object') return;
       const d = parseDateSafe(e.date);
       if (d && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
         const day = d.getDate();
@@ -148,6 +149,7 @@ export default function CalendarScreen({ onNavigate, events = [] }) {
   // Filter & sort events matching current month
   const filteredEventsForMonth = React.useMemo(() => {
     return safeEvents.filter(e => {
+      if (!e || typeof e !== 'object') return false;
       const d = parseDateSafe(e.date);
       return d && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     }).sort((a, b) => {
@@ -273,20 +275,24 @@ export default function CalendarScreen({ onNavigate, events = [] }) {
                 <View 
                   key={idx} 
                   style={[
-                    tw`w-[13.5%] aspect-square items-center justify-center m-[0.3%] rounded-full`,
-                    isToday 
-                      ? tw`bg-cyan-50 border-2 border-cyan-500 shadow-sm` 
-                      : cell.isCurrent ? tw`bg-slate-50/60 border border-slate-100` : tw`bg-transparent border-transparent`
+                    tw`w-[14.28%] aspect-square items-center justify-center p-0.5`,
                   ]}
                 >
-                  <View style={tw`w-full h-full items-center justify-center relative`}>
-                    <Text style={tw`text-xs font-bold ${isToday ? 'text-cyan-700 font-extrabold' : cell.isCurrent ? 'text-slate-800' : 'text-slate-300'}`}>
+                  <View 
+                    style={[
+                      tw`w-full h-full items-center justify-center rounded-full`,
+                      isToday 
+                        ? tw`bg-cyan-50 border-2 border-cyan-500 shadow-sm` 
+                        : cell.isCurrent ? tw`bg-slate-50/60 border border-slate-100` : tw`bg-transparent`
+                    ]}
+                  >
+                    <Text style={tw(`text-xs font-bold ${isToday ? 'text-cyan-700 font-extrabold' : cell.isCurrent ? 'text-slate-800' : 'text-slate-300'}`)}>
                       {cell.day}
                     </Text>
                     {hasEvents && (
                       <View style={[
                         tw`absolute bottom-1 w-1.5 h-1.5 rounded-full`,
-                        isToday ? tw`bg-cyan-500` : tw`${dotColor}`
+                        isToday ? tw`bg-cyan-500` : tw(dotColor)
                       ]} />
                     )}
                   </View>
@@ -314,9 +320,9 @@ export default function CalendarScreen({ onNavigate, events = [] }) {
                 {/* Top Category Header Bar */}
                 <View style={[
                   tw`px-4 py-2 flex-row items-center justify-between`,
-                  tw`${catConfig.barBg} ${catConfig.borderColor}`
+                  tw(`${catConfig.barBg} ${catConfig.borderColor}`)
                 ]}>
-                  <Text style={tw`text-[10px] font-extrabold uppercase tracking-wider ${catConfig.textColor}`}>
+                  <Text style={tw(`text-[10px] font-extrabold uppercase tracking-wider ${catConfig.textColor}`)}>
                     {catConfig.label}
                   </Text>
                   {upcomingText ? (
