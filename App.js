@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, SafeAreaView, Platform, Animated, Alert, AppState } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, SafeAreaView, Platform, Animated, Alert, AppState, NativeModules } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { API_BASE_URL } from './config';
 import { StatusBar } from 'expo-status-bar';
 import { Feather, FontAwesome } from '@expo/vector-icons';
@@ -227,7 +228,7 @@ export default function App() {
   }, [isTimerRunning, timerSecondsLeft, showCheatWarning, isSleepingCooldown]);
 
   // Trigger Focus Guard (Exit Warning)
-  const triggerFocusGuard = () => {
+  const triggerFocusGuard = async () => {
     console.log(`[FocusGuard] triggerFocusGuard called. isTimerRunning = ${isTimerRunningRef.current}, isDeepFocus = ${isDeepFocusRef.current}, leftTime = ${leftTimeRef.current}`);
     if (Date.now() - lastStartedTimeRef.current < 500) {
       console.log(`[FocusGuard] triggerFocusGuard returned early (recent start).`);
@@ -239,9 +240,29 @@ export default function App() {
         leftTimeRef.current = Date.now();
         console.log(`[FocusGuard] Set leftTimeRef to ${leftTimeRef.current}`);
       }
-      if (isDeepFocusRef.current) {
-        console.log(`[FocusGuard] Deep Focus active: Pausing timer.`);
-        setIsTimerRunning(false);
+      
+      if (isDeepFocusRef.current && Platform.OS !== 'web') {
+        try {
+          // Cancel any existing warning notifications
+          await Notifications.cancelAllScheduledNotificationsAsync();
+          
+          // Schedule focus alert warning in 10 seconds
+          await Notifications.scheduleNotificationAsync({
+            identifier: 'focus-warning',
+            content: {
+              title: "Focus Interrupted! ⚠️",
+              body: "You left the app! Return within 10 seconds or Study Buddy will fall asleep!",
+              sound: true,
+              channelId: 'default',
+            },
+            trigger: {
+              seconds: 10,
+            },
+          });
+          console.log("[FocusGuard] Scheduled focus warning notification for 10s.");
+        } catch (err) {
+          console.warn("[FocusGuard] Error scheduling warning notification:", err);
+        }
       }
     }
   };
@@ -272,26 +293,84 @@ export default function App() {
     setSleepCooldownSeconds(10 * 60);
   };
 
-  const handleReturnFocus = () => {
+  const handleReturnFocus = async () => {
     console.log(`[FocusGuard] handleReturnFocus called. leftTime = ${leftTimeRef.current}, isDeepFocus = ${isDeepFocusRef.current}`);
     if (leftTimeRef.current > 0) {
       const elapsedSec = Math.floor((Date.now() - leftTimeRef.current) / 1000);
       console.log(`[FocusGuard] Time elapsed away from app: ${elapsedSec}s`);
       
+      if (Platform.OS !== 'web') {
+        try {
+          await Notifications.cancelAllScheduledNotificationsAsync();
+          console.log("[FocusGuard] Dismissed all warning notifications.");
+        } catch (err) {
+          console.warn("[FocusGuard] Error cancelling notifications:", err);
+        }
+      }
+
+      let screenWasOff = false;
+      let isNativeLockSupported = false;
+      
+      const { LockDetection } = NativeModules;
+      if (Platform.OS === 'android' && LockDetection) {
+        isNativeLockSupported = true;
+        try {
+          screenWasOff = await LockDetection.getAndResetScreenWasOff();
+          console.log(`[FocusGuard] LockDetection screenWasOff: ${screenWasOff}`);
+        } catch (err) {
+          console.warn('[FocusGuard] Error calling LockDetection:', err);
+        }
+      }
+
       if (isDeepFocusRef.current) {
-        if (elapsedSec > 10) {
-          console.log(`[FocusGuard] Elapsed > 10s. Showing cheat warning.`);
-          setWarningSecondsLeft(elapsedSec);
-          setShowCheatWarning(true);
-          showCheatWarningRef.current = true;
-          setCurrentScreen('timer');
+        if (isNativeLockSupported) {
+          if (screenWasOff) {
+            // Screen locked: let study continue normally
+            console.log(`[FocusGuard] Valid lock screen study. Deducting ${elapsedSec}s from timer.`);
+            setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
+            leftTimeRef.current = 0;
+          } else {
+            // App switched: check if elapsed time exceeds 10s grace period
+            if (elapsedSec > 10) {
+              console.log("[FocusGuard] Switched apps for >10s. Failing focus immediately.");
+              leftTimeRef.current = 0;
+              setIsTimerRunning(false);
+              isTimerRunningRef.current = false;
+              setStreakLost(true);
+
+              // Cooldown active
+              isSleepingCooldownRef.current = true;
+              setIsSleepingCooldown(true);
+              sleepStartTimeRef.current = Date.now();
+              setSleepCooldownSeconds(10 * 60);
+
+              Alert.alert(
+                "Focus Broken ⚠️",
+                "You left the app! Study Buddy fell asleep and is in a 10-minute sleep cooldown.",
+                [{ text: "OK" }]
+              );
+            } else {
+              console.log(`[FocusGuard] Switched apps but returned within 10s. Deducting ${elapsedSec}s.`);
+              setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
+              leftTimeRef.current = 0;
+            }
+          }
         } else {
-          console.log(`[FocusGuard] Elapsed <= 10s. Resuming study.`);
-          setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
-          setIsTimerRunning(true); // Resume timer
-          leftTimeRef.current = 0;
+          // Web/iOS fallback: ask them using warning screen
+          if (elapsedSec > 10) {
+            console.log(`[FocusGuard] Elapsed > 10s (fallback). Showing cheat warning.`);
+            setWarningSecondsLeft(elapsedSec);
+            setShowCheatWarning(true);
+            showCheatWarningRef.current = true;
+            setCurrentScreen('timer');
+          } else {
+            console.log(`[FocusGuard] Elapsed <= 10s (fallback). Resuming study.`);
+            setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
+            leftTimeRef.current = 0;
+          }
         }
       } else {
+        // Normal focus: just deduct elapsed time
         console.log(`[FocusGuard] Normal Focus: Deducting ${elapsedSec}s from timer.`);
         setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
         leftTimeRef.current = 0;
