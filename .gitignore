@@ -43,3 +43,6 @@ backend/.env
 # generated native folders
 /ios
 /android
+
+# Local credentials
+credentials.json
