@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ActivityIndicator, StatusBar, Keyboard } from 'react-native';
 import tw from 'twrnc';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config';
@@ -29,6 +29,23 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const messages = chatMessages || internalMessages;
   const setMessages = setChatMessages || setInternalMessages;
@@ -239,7 +256,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
 
       {/* Chat Container */}
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
         style={tw`flex-1`}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
@@ -305,7 +322,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
         </ScrollView>
 
         {/* Floating Input Bar */}
-        <View style={tw`px-6 py-3.5 bg-white/95 border-t border-slate-200/60 flex-row items-center mb-28`}>
+        <View style={tw`px-6 py-3.5 bg-white/95 border-t border-slate-200/60 flex-row items-center ${isKeyboardVisible ? 'mb-0' : 'mb-28'}`}>
           <TextInput
             placeholder="Type your study question here..."
             placeholderTextColor="#94A3B8"
@@ -327,7 +344,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
       </KeyboardAvoidingView>
 
       {/* Floating Glass Navigation Bar */}
-      {!isMenuOpen && (
+      {!isMenuOpen && !isKeyboardVisible && (
         <View style={tw`absolute bottom-6 left-6 right-6 bg-white/90 border border-white/80 rounded-full py-2.5 px-6 flex-row justify-between items-center shadow-xl shadow-indigo-500/10 backdrop-blur-lg`}>
           {navItems.map((item) => {
             const isActive = item.id === 'chatbot';
