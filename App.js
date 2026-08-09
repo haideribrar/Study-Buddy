@@ -294,29 +294,11 @@ export default function App() {
 
             // Cancel any existing warning notifications
             await Notifications.cancelAllScheduledNotificationsAsync();
-            
-            // Schedule focus alert warning in 10 seconds
-            await Notifications.scheduleNotificationAsync({
-              identifier: 'focus-warning',
-              content: {
-                title: "Focus Interrupted! ⚠️",
-                body: "You left the app! Return within 10 seconds or Study Buddy will fall asleep!",
-                sound: true,
-                channelId: 'study_buddy_reminders',
-              },
-              trigger: {
-                type: 'timeInterval',
-                seconds: 10,
-                repeats: false,
-                channelId: 'study_buddy_reminders',
-              },
-            });
-            console.log("[FocusGuard] Scheduled focus warning notification for 10s.");
+            console.log("[FocusGuard] Silent focus guard mode. No warning notification scheduled.");
           } catch (err) {
-            console.warn("[FocusGuard] Error scheduling warning notification:", err);
-            Alert.alert("Focus Notification Error", `Error details: ${err.message || err}`, [{ text: "OK" }]);
+            console.warn("[FocusGuard] Error in focus guard timeout:", err);
           }
-        }, 500);
+        }, 1000);
       }
     }
   };
@@ -555,6 +537,22 @@ export default function App() {
       ];
     }
 
+    const tempId = `temp_${Date.now()}`;
+    const optimisticEvent = {
+      id: tempId,
+      title: newEvent.title,
+      date: newEvent.date,
+      category: newEvent.category,
+      subTasks,
+      progress: 0,
+      isOptimistic: true
+    };
+
+    // Optimistically update state and navigate back instantly!
+    const originalEvents = [...events];
+    setEvents((prev) => [optimisticEvent, ...prev]);
+    setCurrentScreen('dashboard');
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/events`, {
         method: 'POST',
@@ -573,13 +571,13 @@ export default function App() {
 
       const data = await response.json();
       if (response.ok) {
-        setEvents((prev) => [data, ...prev]);
-        setCurrentScreen('dashboard');
+        // Swap the temporary optimistic object for the real database-persisted event
+        setEvents((prev) => prev.map((e) => (e.id === tempId ? data : e)));
 
-        // Execute side effects asynchronously outside the React state setter callback
+        // Execute side effects asynchronously
         (async () => {
           try {
-            const updated = [data, ...events];
+            const updated = [data, ...originalEvents];
             const stringified = JSON.stringify(updated);
             if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
               localStorage.setItem('cached_events', stringified);
@@ -604,6 +602,9 @@ export default function App() {
           }
         })();
       } else {
+        // Revert UI on failure
+        setEvents(originalEvents);
+
         if (response.status === 401) {
           handleLogout();
           Alert.alert("Session Expired", "Your session has expired. Please log in again.");
@@ -612,6 +613,8 @@ export default function App() {
         Alert.alert("Error", data.error || "Failed to create event");
       }
     } catch (err) {
+      // Revert UI on network error
+      setEvents(originalEvents);
       console.error('[App] Add event error:', err.message);
       Alert.alert("Error", "Network error adding event");
     }
