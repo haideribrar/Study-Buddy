@@ -261,23 +261,25 @@ export default function App() {
       }
       
       if (isDeepFocusRef.current && Platform.OS !== 'web') {
-        // Wait 500ms to allow screen state to fully transition
+        // Wait 1000ms to allow slower devices to fully update the screen/lock state
         setTimeout(async () => {
           try {
-            // Check if screen is currently on/interactive on Android
+            // Check if screen is currently on/interactive and if screen off broadcast was received on Android
             let screenOn = true;
+            let screenWasOff = false;
             const { LockDetection } = NativeModules;
             if (Platform.OS === 'android' && LockDetection) {
               try {
                 screenOn = await LockDetection.isScreenOn();
-                console.log(`[FocusGuard] triggerFocusGuard LockDetection isScreenOn after delay: ${screenOn}`);
+                screenWasOff = await LockDetection.getScreenWasOff();
+                console.log(`[FocusGuard] triggerFocusGuard LockDetection check: screenOn=${screenOn}, screenWasOff=${screenWasOff}`);
               } catch (err) {
-                console.warn('[FocusGuard] Error calling LockDetection.isScreenOn:', err);
+                console.warn('[FocusGuard] Error calling LockDetection in triggerFocusGuard:', err);
               }
             }
 
-            if (!screenOn) {
-              console.log("[FocusGuard] Screen is off. Skipping warning notification.");
+            if (!screenOn || screenWasOff) {
+              console.log("[FocusGuard] Screen is off/locked. Skipping warning notification.");
               // Set the screen off state on native module immediately as a reliable backup
               if (Platform.OS === 'android' && LockDetection) {
                 try {
@@ -616,6 +618,10 @@ export default function App() {
   };
 
   const handleDeleteEvent = async (id) => {
+    // Optimistically update the UI to instantly remove the deleted reminder from the screen
+    const originalEvents = [...events];
+    setEvents((prev) => prev.filter((event) => event.id !== id));
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/events/${id}`, {
         method: 'DELETE',
@@ -624,12 +630,10 @@ export default function App() {
         }
       });
       if (response.ok) {
-        setEvents((prev) => prev.filter((event) => event.id !== id));
-
-        // Execute side effects asynchronously outside the React state setter callback
+        // Execute side effects asynchronously
         (async () => {
           try {
-            const updated = events.filter((event) => event.id !== id);
+            const updated = originalEvents.filter((event) => event.id !== id);
             const stringified = JSON.stringify(updated);
             if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
               localStorage.setItem('cached_events', stringified);
@@ -657,6 +661,9 @@ export default function App() {
           }
         })();
       } else {
+        // Revert back on error
+        setEvents(originalEvents);
+
         if (response.status === 401) {
           handleLogout();
           Alert.alert("Session Expired", "Your session has expired. Please log in again.");
@@ -666,7 +673,10 @@ export default function App() {
         Alert.alert("Error", data.error || "Failed to delete event");
       }
     } catch (err) {
+      // Revert back on error
+      setEvents(originalEvents);
       console.error('[App] Delete event error:', err.message);
+      Alert.alert("Error", "Network error deleting event");
     }
   };
 

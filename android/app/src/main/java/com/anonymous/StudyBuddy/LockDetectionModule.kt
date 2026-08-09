@@ -69,6 +69,12 @@ class LockDetectionModule(reactContext: ReactApplicationContext) : ReactContextB
     }
 
     @ReactMethod
+    fun getScreenWasOff(promise: Promise) {
+        val prefs = reactApplicationContext.getSharedPreferences("LockDetectionPrefs", Context.MODE_PRIVATE)
+        promise.resolve(prefs.getBoolean("screenWasOff", false))
+    }
+
+    @ReactMethod
     fun isScreenOn(promise: Promise) {
         try {
             val powerManager = reactApplicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
