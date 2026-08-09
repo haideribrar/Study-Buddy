@@ -1,4 +1,4 @@
-import { Platform, Alert } from 'react-native';
+import { Platform, Alert, PermissionsAndroid } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
 // Configure default notification handler for foreground notifications
@@ -17,6 +17,29 @@ export async function requestNotificationPermissions() {
   if (Platform.OS === 'web') return false;
 
   try {
+    // 1. Android 13+ (API 33+) explicit permission request using PermissionsAndroid (robust fallback)
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      const hasPermission = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+      );
+      if (!hasPermission) {
+        console.log('[NotificationService] Requesting Android POST_NOTIFICATIONS permission...');
+        const status = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+        );
+        if (status !== PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('[NotificationService] Android POST_NOTIFICATIONS permission denied.');
+          Alert.alert(
+            "Notifications Disabled",
+            "Please enable notification permissions in your device settings to receive study reminders.",
+            [{ text: "OK" }]
+          );
+          return false;
+        }
+      }
+    }
+
+    // 2. Fallback to Expo's permission handler to ensure internal status is updated
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
@@ -25,24 +48,22 @@ export async function requestNotificationPermissions() {
       finalStatus = status;
     }
 
-    if (finalStatus !== 'granted') {
-      console.log('[NotificationService] Permission not granted for notifications');
-      Alert.alert(
-        "Notifications Disabled",
-        "Please enable notification permissions in your device settings to receive study reminders.",
-        [{ text: "OK" }]
-      );
-      return false;
-    }
-
     if (Platform.OS === 'android') {
+      // Always configure channel to ensure high visibility
       await Notifications.setNotificationChannelAsync('default', {
         name: 'Default',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#4F46E5',
+        bypassDnd: true,
+        showBadge: true,
       });
-      console.log('[NotificationService] Android notification channel created.');
+      console.log('[NotificationService] Android notification channel configured.');
+    }
+
+    if (finalStatus !== 'granted') {
+      console.log('[NotificationService] Permission not granted via Expo.');
+      return false;
     }
 
     return true;
