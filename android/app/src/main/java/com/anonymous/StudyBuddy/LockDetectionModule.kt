@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
+import android.os.PowerManager
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
@@ -30,7 +32,11 @@ class LockDetectionModule(reactContext: ReactApplicationContext) : ReactContextB
                     }
                 }
             }
-            context.registerReceiver(receiver, filter)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
+            } else {
+                context.registerReceiver(receiver, filter)
+            }
             receiverRegistered = true
         }
     }
@@ -48,5 +54,21 @@ class LockDetectionModule(reactContext: ReactApplicationContext) : ReactContextB
         val wasOff = screenWasOff
         screenWasOff = false
         promise.resolve(wasOff)
+    }
+
+    @ReactMethod
+    fun isScreenOn(promise: Promise) {
+        try {
+            val powerManager = reactApplicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val isOn = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+                powerManager.isInteractive
+            } else {
+                @Suppress("DEPRECATION")
+                powerManager.isScreenOn
+            }
+            promise.resolve(isOn)
+        } catch (e: Exception) {
+            promise.reject("ERROR", e.message)
+        }
     }
 }

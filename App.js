@@ -262,6 +262,23 @@ export default function App() {
       
       if (isDeepFocusRef.current && Platform.OS !== 'web') {
         try {
+          // Check if screen is currently on/interactive on Android
+          let screenOn = true;
+          const { LockDetection } = NativeModules;
+          if (Platform.OS === 'android' && LockDetection) {
+            try {
+              screenOn = await LockDetection.isScreenOn();
+              console.log(`[FocusGuard] triggerFocusGuard LockDetection isScreenOn: ${screenOn}`);
+            } catch (err) {
+              console.warn('[FocusGuard] Error calling LockDetection.isScreenOn:', err);
+            }
+          }
+
+          if (!screenOn) {
+            console.log("[FocusGuard] Screen is off. Skipping warning notification.");
+            return;
+          }
+
           // Cancel any existing warning notifications
           await Notifications.cancelAllScheduledNotificationsAsync();
           
