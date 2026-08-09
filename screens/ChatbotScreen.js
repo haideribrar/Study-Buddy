@@ -256,7 +256,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
 
       {/* Chat Container */}
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} 
         style={tw`flex-1`}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
