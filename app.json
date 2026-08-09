@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#FFFFFF"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.StudyBuddy"
@@ -37,15 +32,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-notifications",
-      [
-        "expo-splash-screen",
-        {
-          "image": "./assets/splash-icon.png",
-          "backgroundColor": "#FFFFFF",
-          "resizeMode": "cover"
-        }
-      ]
+      "expo-notifications"
     ],
     "extra": {
       "eas": {
