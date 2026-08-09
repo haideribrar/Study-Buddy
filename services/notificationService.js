@@ -126,6 +126,7 @@ export async function scheduleEventReminder(event) {
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     let triggerDate;
+    let triggerInput = null;
 
     if (diffDays < 0) {
       // Past date: do not schedule
@@ -133,15 +134,18 @@ export async function scheduleEventReminder(event) {
     } else if (diffDays === 0) {
       // Today: send in 5 seconds
       triggerDate = new Date(now.getTime() + 5 * 1000);
+      triggerInput = { seconds: 5 };
     } else if (diffDays === 1) {
       // Tomorrow: send in 1 minute (60 seconds from now)
       triggerDate = new Date(now.getTime() + 60 * 1000);
+      triggerInput = { seconds: 60 };
     } else {
       // Future: send 1 day before the event
       triggerDate = new Date(eventDate.getTime() - 24 * 60 * 60 * 1000);
       if (triggerDate <= now) {
         triggerDate = new Date(now.getTime() + 60 * 1000);
       }
+      triggerInput = { seconds: Math.max(1, Math.round((triggerDate.getTime() - Date.now()) / 1000)) };
     }
 
     const isExam = event.category?.toLowerCase() === 'exam' || event.title?.toLowerCase().includes('exam');
@@ -155,12 +159,10 @@ export async function scheduleEventReminder(event) {
         channelId: 'default',
         data: { eventId: event.id, title: event.title },
       },
-      trigger: {
-        date: triggerDate.getTime(), // Correct JSON-serializable exact alarm trigger
-      },
+      trigger: triggerInput, // Standard serializable seconds interval trigger
     });
 
-    console.log(`[NotificationService] Dispatched/Scheduled reminder for "${event.title}" (Trigger Timestamp: ${triggerDate.getTime()} (${triggerDate.toLocaleString()}), ID: ${notificationId})`);
+    console.log(`[NotificationService] Dispatched/Scheduled reminder for "${event.title}" (Trigger: ${triggerInput.seconds}s, ID: ${notificationId})`);
     return notificationId;
   } catch (error) {
     console.warn('[NotificationService] Failed to schedule notification:', error);
