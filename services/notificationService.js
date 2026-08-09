@@ -135,18 +135,33 @@ export async function scheduleEventReminder(event) {
     } else if (diffDays === 0) {
       // Today: send in 5 seconds
       triggerDate = new Date(now.getTime() + 5 * 1000);
-      triggerInput = { seconds: 5 };
+      triggerInput = {
+        type: 'timeInterval',
+        seconds: 5,
+        repeats: false,
+        channelId: 'study_buddy_reminders',
+      };
     } else if (diffDays === 1) {
       // Tomorrow: send in 1 minute (60 seconds from now)
       triggerDate = new Date(now.getTime() + 60 * 1000);
-      triggerInput = { seconds: 60 };
+      triggerInput = {
+        type: 'timeInterval',
+        seconds: 60,
+        repeats: false,
+        channelId: 'study_buddy_reminders',
+      };
     } else {
       // Future: send 1 day before the event
       triggerDate = new Date(eventDate.getTime() - 24 * 60 * 60 * 1000);
       if (triggerDate <= now) {
         triggerDate = new Date(now.getTime() + 60 * 1000);
       }
-      triggerInput = { seconds: Math.max(1, Math.round((triggerDate.getTime() - Date.now()) / 1000)) };
+      triggerInput = {
+        type: 'timeInterval',
+        seconds: Math.max(1, Math.round((triggerDate.getTime() - Date.now()) / 1000)),
+        repeats: false,
+        channelId: 'study_buddy_reminders',
+      };
     }
 
     const isExam = event.category?.toLowerCase() === 'exam' || event.title?.toLowerCase().includes('exam');

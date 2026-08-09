@@ -303,7 +303,10 @@ export default function App() {
                 channelId: 'study_buddy_reminders',
               },
               trigger: {
+                type: 'timeInterval',
                 seconds: 10,
+                repeats: false,
+                channelId: 'study_buddy_reminders',
               },
             });
             console.log("[FocusGuard] Scheduled focus warning notification for 10s.");
