@@ -14,7 +14,6 @@ import com.facebook.react.bridge.Promise
 class LockDetectionModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
     
     companion object {
-        var screenWasOff = false
         var receiverRegistered = false
         var receiver: BroadcastReceiver? = null
         
@@ -28,7 +27,10 @@ class LockDetectionModule(reactContext: ReactApplicationContext) : ReactContextB
             receiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     if (intent?.action == Intent.ACTION_SCREEN_OFF) {
-                        screenWasOff = true
+                        context?.let {
+                            val prefs = it.getSharedPreferences("LockDetectionPrefs", Context.MODE_PRIVATE)
+                            prefs.edit().putBoolean("screenWasOff", true).apply()
+                        }
                     }
                 }
             }
@@ -51,9 +53,19 @@ class LockDetectionModule(reactContext: ReactApplicationContext) : ReactContextB
 
     @ReactMethod
     fun getAndResetScreenWasOff(promise: Promise) {
-        val wasOff = screenWasOff
-        screenWasOff = false
+        val prefs = reactApplicationContext.getSharedPreferences("LockDetectionPrefs", Context.MODE_PRIVATE)
+        val wasOff = prefs.getBoolean("screenWasOff", false)
+        if (wasOff) {
+            prefs.edit().putBoolean("screenWasOff", false).apply()
+        }
         promise.resolve(wasOff)
+    }
+
+    @ReactMethod
+    fun setScreenWasOff(wasOff: Boolean, promise: Promise) {
+        val prefs = reactApplicationContext.getSharedPreferences("LockDetectionPrefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("screenWasOff", wasOff).apply()
+        promise.resolve(null)
     }
 
     @ReactMethod

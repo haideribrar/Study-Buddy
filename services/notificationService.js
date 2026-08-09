@@ -126,22 +126,26 @@ export async function scheduleEventReminder(event) {
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     let triggerDate;
+    let triggerInput = null;
 
     if (diffDays < 0) {
       // Past date: do not schedule
       return null;
     } else if (diffDays === 0) {
-      // Today: send immediately (5 seconds from now)
-      triggerDate = new Date(now.getTime() + 5 * 1000);
+      // Today: send immediately (trigger = null) to bypass OS AlarmManager freezing/throttling
+      triggerDate = new Date();
+      triggerInput = null;
     } else if (diffDays === 1) {
       // Tomorrow: send 1 minute later (60 seconds from now)
       triggerDate = new Date(now.getTime() + 60 * 1000);
+      triggerInput = { seconds: 60 };
     } else {
       // Future: send 1 day before the event
       triggerDate = new Date(eventDate.getTime() - 24 * 60 * 60 * 1000);
       if (triggerDate <= now) {
         triggerDate = new Date(now.getTime() + 60 * 1000);
       }
+      triggerInput = { seconds: Math.max(1, Math.round((triggerDate.getTime() - Date.now()) / 1000)) };
     }
 
     const isExam = event.category?.toLowerCase() === 'exam' || event.title?.toLowerCase().includes('exam');
@@ -155,12 +159,10 @@ export async function scheduleEventReminder(event) {
         channelId: 'default',
         data: { eventId: event.id, title: event.title },
       },
-      trigger: {
-        seconds: Math.max(1, Math.round((triggerDate.getTime() - Date.now()) / 1000)),
-      },
+      trigger: triggerInput,
     });
 
-    console.log(`[NotificationService] Scheduled reminder for "${event.title}" at ${triggerDate.toLocaleString()} (ID: ${notificationId})`);
+    console.log(`[NotificationService] Dispatched/Scheduled reminder for "${event.title}" (Trigger: ${triggerInput ? triggerInput.seconds + 's' : 'Immediate'}, ID: ${notificationId})`);
     return notificationId;
   } catch (error) {
     console.warn('[NotificationService] Failed to schedule notification:', error);

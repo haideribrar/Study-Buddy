@@ -278,6 +278,15 @@ export default function App() {
 
             if (!screenOn) {
               console.log("[FocusGuard] Screen is off. Skipping warning notification.");
+              // Set the screen off state on native module immediately as a reliable backup
+              if (Platform.OS === 'android' && LockDetection) {
+                try {
+                  await LockDetection.setScreenWasOff(true);
+                  console.log("[FocusGuard] Successfully wrote screenWasOff=true backup to SharedPreferences.");
+                } catch (err) {
+                  console.warn("[FocusGuard] Failed to write screenWasOff backup:", err);
+                }
+              }
               return;
             }
 
