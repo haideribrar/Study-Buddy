@@ -261,44 +261,47 @@ export default function App() {
       }
       
       if (isDeepFocusRef.current && Platform.OS !== 'web') {
-        try {
-          // Check if screen is currently on/interactive on Android
-          let screenOn = true;
-          const { LockDetection } = NativeModules;
-          if (Platform.OS === 'android' && LockDetection) {
-            try {
-              screenOn = await LockDetection.isScreenOn();
-              console.log(`[FocusGuard] triggerFocusGuard LockDetection isScreenOn: ${screenOn}`);
-            } catch (err) {
-              console.warn('[FocusGuard] Error calling LockDetection.isScreenOn:', err);
+        // Wait 500ms to allow screen state to fully transition
+        setTimeout(async () => {
+          try {
+            // Check if screen is currently on/interactive on Android
+            let screenOn = true;
+            const { LockDetection } = NativeModules;
+            if (Platform.OS === 'android' && LockDetection) {
+              try {
+                screenOn = await LockDetection.isScreenOn();
+                console.log(`[FocusGuard] triggerFocusGuard LockDetection isScreenOn after delay: ${screenOn}`);
+              } catch (err) {
+                console.warn('[FocusGuard] Error calling LockDetection.isScreenOn:', err);
+              }
             }
-          }
 
-          if (!screenOn) {
-            console.log("[FocusGuard] Screen is off. Skipping warning notification.");
-            return;
-          }
+            if (!screenOn) {
+              console.log("[FocusGuard] Screen is off. Skipping warning notification.");
+              return;
+            }
 
-          // Cancel any existing warning notifications
-          await Notifications.cancelAllScheduledNotificationsAsync();
-          
-          // Schedule focus alert warning in 10 seconds
-          await Notifications.scheduleNotificationAsync({
-            identifier: 'focus-warning',
-            content: {
-              title: "Focus Interrupted! ⚠️",
-              body: "You left the app! Return within 10 seconds or Study Buddy will fall asleep!",
-              sound: true,
-              channelId: 'default',
-            },
-            trigger: {
-              seconds: 10,
-            },
-          });
-          console.log("[FocusGuard] Scheduled focus warning notification for 10s.");
-        } catch (err) {
-          console.warn("[FocusGuard] Error scheduling warning notification:", err);
-        }
+            // Cancel any existing warning notifications
+            await Notifications.cancelAllScheduledNotificationsAsync();
+            
+            // Schedule focus alert warning in 10 seconds
+            await Notifications.scheduleNotificationAsync({
+              identifier: 'focus-warning',
+              content: {
+                title: "Focus Interrupted! ⚠️",
+                body: "You left the app! Return within 10 seconds or Study Buddy will fall asleep!",
+                sound: true,
+                channelId: 'default',
+              },
+              trigger: {
+                seconds: 10,
+              },
+            });
+            console.log("[FocusGuard] Scheduled focus warning notification for 10s.");
+          } catch (err) {
+            console.warn("[FocusGuard] Error scheduling warning notification:", err);
+          }
+        }, 500);
       }
     }
   };
@@ -365,12 +368,19 @@ export default function App() {
           setTimerSecondsLeft((prev) => Math.max(0, prev - elapsedSec));
           leftTimeRef.current = 0;
         } else {
-          // App switched (or Web/iOS fallback): trigger 10-second warning countdown screen!
-          console.log(`[FocusGuard] Interruption detected. Initiating 10s countdown.`);
-          setWarningSecondsLeft(10);
-          setShowCheatWarning(true);
-          showCheatWarningRef.current = true;
-          setCurrentScreen('timer');
+          // App switched (or screen lock not detected/supported):
+          // Enforce 10-second grace period starting from the moment they left
+          if (elapsedSec <= 10) {
+            const rem = 10 - elapsedSec;
+            console.log(`[FocusGuard] Interruption detected within grace period. Remaining warning time: ${rem}s.`);
+            setWarningSecondsLeft(rem);
+            setShowCheatWarning(true);
+            showCheatWarningRef.current = true;
+            setCurrentScreen('timer');
+          } else {
+            console.log(`[FocusGuard] Exceeded 10s grace period (away for ${elapsedSec}s). Failing session.`);
+            handleFailFocusSession();
+          }
         }
       } else {
         // Normal focus: just deduct elapsed time
