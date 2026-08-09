@@ -155,10 +155,12 @@ export async function scheduleEventReminder(event) {
         channelId: 'default',
         data: { eventId: event.id, title: event.title },
       },
-      trigger: triggerDate, // Exact alarm trigger using Date object
+      trigger: {
+        date: triggerDate.getTime(), // Correct JSON-serializable exact alarm trigger
+      },
     });
 
-    console.log(`[NotificationService] Dispatched/Scheduled reminder for "${event.title}" (Trigger Date: ${triggerDate.toLocaleString()}, ID: ${notificationId})`);
+    console.log(`[NotificationService] Dispatched/Scheduled reminder for "${event.title}" (Trigger Timestamp: ${triggerDate.getTime()} (${triggerDate.toLocaleString()}), ID: ${notificationId})`);
     return notificationId;
   } catch (error) {
     console.warn('[NotificationService] Failed to schedule notification:', error);
