@@ -28,6 +28,10 @@
         "android.permission.SCHEDULE_EXACT_ALARM"
       ]
     },
+    "notification": {
+      "icon": "./assets/android-icon-monochrome.png",
+      "color": "#4F46E5"
+    },
     "web": {
       "favicon": "./assets/favicon.png"
     },

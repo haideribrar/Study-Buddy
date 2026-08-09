@@ -300,7 +300,7 @@ export default function App() {
                 title: "Focus Interrupted! ⚠️",
                 body: "You left the app! Return within 10 seconds or Study Buddy will fall asleep!",
                 sound: true,
-                channelId: 'default',
+                channelId: 'study_buddy_reminders',
               },
               trigger: {
                 seconds: 10,
@@ -309,6 +309,7 @@ export default function App() {
             console.log("[FocusGuard] Scheduled focus warning notification for 10s.");
           } catch (err) {
             console.warn("[FocusGuard] Error scheduling warning notification:", err);
+            Alert.alert("Focus Notification Error", `Error details: ${err.message || err}`, [{ text: "OK" }]);
           }
         }, 500);
       }

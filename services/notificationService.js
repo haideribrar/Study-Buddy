@@ -49,16 +49,16 @@ export async function requestNotificationPermissions() {
     }
 
     if (Platform.OS === 'android') {
-      // Always configure channel to ensure high visibility
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'Default',
+      // Always configure a brand new channel ID to force MAX importance (since old channel settings cannot be modified dynamically)
+      await Notifications.setNotificationChannelAsync('study_buddy_reminders', {
+        name: 'Study Buddy Reminders',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#4F46E5',
         bypassDnd: true,
         showBadge: true,
       });
-      console.log('[NotificationService] Android notification channel configured.');
+      console.log('[NotificationService] Android notification channel configured with study_buddy_reminders.');
     }
 
     if (finalStatus !== 'granted') {
@@ -69,6 +69,7 @@ export async function requestNotificationPermissions() {
     return true;
   } catch (error) {
     console.warn('[NotificationService] Error requesting permissions:', error);
+    Alert.alert("Permission Request Error", `Error details: ${error.message || error}`, [{ text: "OK" }]);
     return false;
   }
 }
@@ -156,7 +157,7 @@ export async function scheduleEventReminder(event) {
         title: `Upcoming ${categoryName} Tomorrow!`,
         body: `Reminder: You have "${event.title}" scheduled for tomorrow. Time to review your notes!`,
         sound: true,
-        channelId: 'default',
+        channelId: 'study_buddy_reminders',
         data: { eventId: event.id, title: event.title },
       },
       trigger: triggerInput, // Standard serializable seconds interval trigger
@@ -166,6 +167,7 @@ export async function scheduleEventReminder(event) {
     return notificationId;
   } catch (error) {
     console.warn('[NotificationService] Failed to schedule notification:', error);
+    Alert.alert("Scheduling Error", `Error details: ${error.message || error}`, [{ text: "OK" }]);
     return null;
   }
 }
