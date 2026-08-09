@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, SafeAreaView, Platform, Animated, Alert, AppState, NativeModules } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, SafeAreaView, Platform, Animated, Alert, AppState, NativeModules, Image } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { API_BASE_URL } from './config';
 import { StatusBar } from 'expo-status-bar';
@@ -21,12 +21,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { requestNotificationPermissions, scheduleEventReminder, cancelEventReminder } from './services/notificationService';
 
 export default function App() {
+  const [isAppLoading, setIsAppLoading] = useState(true);
+
   useEffect(() => {
     requestNotificationPermissions();
     restoreSession();
   }, []);
 
   const restoreSession = async () => {
+    const startTime = Date.now();
     try {
       // 1. Instantly load cached events from storage
       try {
@@ -64,6 +67,12 @@ export default function App() {
       }
     } catch (err) {
       console.warn('[App] Error restoring session:', err);
+    } finally {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 2000 - elapsed);
+      setTimeout(() => {
+        setIsAppLoading(false);
+      }, remaining);
     }
   };
 
@@ -876,6 +885,29 @@ export default function App() {
         return <LoginScreen onNavigate={handleNavigate} onLogin={handleLogin} />;
     }
   };
+
+  if (isAppLoading) {
+    return (
+      <View style={tw`flex-1 bg-white items-center justify-center`}>
+        <StatusBar style="dark" />
+        <View style={tw`items-center px-8`}>
+          <Image 
+            source={require('./assets/icon.png')} 
+            style={[
+              tw`w-52 h-52 mb-6`,
+              { resizeMode: 'contain' }
+            ]}
+          />
+          <Text style={tw`text-4xl font-extrabold text-slate-900 tracking-tight text-center`}>
+            Study Buddy
+          </Text>
+          <Text style={tw`text-sm font-semibold text-slate-500 mt-2 text-center`}>
+            Your smarter way to study
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
