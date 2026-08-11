@@ -49,3 +49,7 @@ credentials.json
 
 # Local JDK Symlink
 jdk_link
+
+# Builds and IDE configurations
+*.apk
+.idea/

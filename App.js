@@ -159,7 +159,7 @@ export default function App() {
       // 3. Apple Touch Icon Link (forces Safari to reload)
       const link3 = document.createElement('link');
       link3.rel = 'apple-touch-icon';
-      link3.href = FAVICON_DATA_URL;
+      link3.href = '/apple-touch-icon.png';
       head.appendChild(link3);
 
       // 4. Global CSS to remove blue focus outline rings on web inputs
