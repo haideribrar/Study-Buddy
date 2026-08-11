@@ -10,8 +10,8 @@ self.addEventListener('push', function(event) {
 
   const options = {
     body: data.body,
-    icon: '/apple-touch-icon.png',
-    badge: '/favicon.png',
+    icon: self.location.origin + '/apple-touch-icon.png',
+    badge: self.location.origin + '/favicon.png',
     data: data.data || {}
   };
 
