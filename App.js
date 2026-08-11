@@ -21,6 +21,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { requestNotificationPermissions, scheduleEventReminder, cancelEventReminder } from './services/notificationService';
 
 export default function App() {
+  const showAlert = (title, message) => {
+    if (Platform.OS === 'web') {
+      alert(`${title}: ${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   useEffect(() => {
     requestNotificationPermissions();
     restoreSession();
@@ -559,7 +567,7 @@ export default function App() {
       } else {
         if (response.status === 401) {
           handleLogout();
-          Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+          showAlert("Session Expired", "Your session has expired. Please log in again.");
           return;
         }
         console.error('[App] Fetch events failed or returned non-array:', data);
@@ -671,16 +679,16 @@ export default function App() {
 
         if (response.status === 401) {
           handleLogout();
-          Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+          showAlert("Session Expired", "Your session has expired. Please log in again.");
           return;
         }
-        Alert.alert("Error", data.error || "Failed to create event");
+        showAlert("Error", data.error || "Failed to create event");
       }
     } catch (err) {
       // Revert UI on network error
       setEvents(originalEvents);
       console.error('[App] Add event error:', err.message);
-      Alert.alert("Error", "Network error adding event");
+      showAlert("Error", "Network error adding event");
     }
   };
 
@@ -733,17 +741,17 @@ export default function App() {
 
         if (response.status === 401) {
           handleLogout();
-          Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+          showAlert("Session Expired", "Your session has expired. Please log in again.");
           return;
         }
         const data = await response.json();
-        Alert.alert("Error", data.error || "Failed to delete event");
+        showAlert("Error", data.error || "Failed to delete event");
       }
     } catch (err) {
       // Revert back on error
       setEvents(originalEvents);
       console.error('[App] Delete event error:', err.message);
-      Alert.alert("Error", "Network error deleting event");
+      showAlert("Error", "Network error deleting event");
     }
   };
 
@@ -787,7 +795,7 @@ export default function App() {
       }).then(res => {
         if (res.status === 401) {
           handleLogout();
-          Alert.alert("Session Expired", "Your session has expired. Please log in again.");
+          showAlert("Session Expired", "Your session has expired. Please log in again.");
         }
       }).catch((err) => {
         console.error('[App] Progress update sync error:', err.message);
@@ -1020,12 +1028,12 @@ export default function App() {
                           });
                           const data = await res.json();
                           if (res.ok) {
-                            Alert.alert("Push Sent", "Check your lock screen! 🔔");
+                            showAlert("Push Sent", "Check your lock screen! 🔔");
                           } else {
-                            Alert.alert("Push Failed", data.error || "Could not send push notification.");
+                            showAlert("Push Failed", data.error || "Could not send push notification.");
                           }
                         } catch (err) {
-                          Alert.alert("Network Error", err.message);
+                          showAlert("Network Error", err.message);
                         }
                       }}
                       style={tw`flex-row items-center bg-white/80 border border-slate-200/60 rounded-[20px] p-4 mb-4 shadow-sm`}
