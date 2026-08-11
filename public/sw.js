@@ -12,11 +12,7 @@ self.addEventListener('push', function(event) {
     body: data.body,
     icon: '/apple-touch-icon.png',
     badge: '/favicon.png',
-    data: data.data || {},
-    vibrate: [100, 50, 100],
-    actions: [
-      { action: 'open', title: 'Open App' }
-    ]
+    data: data.data || {}
   };
 
   event.waitUntil(

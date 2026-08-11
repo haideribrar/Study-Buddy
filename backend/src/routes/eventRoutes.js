@@ -67,29 +67,26 @@ router.post('/', async (req, res) => {
       const diffDays = Math.round((eventMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
 
       if (diffDays === 0 || diffDays === 1) {
-        const delayMs = diffDays === 0 ? 5000 : 10000; // 5s for today, 10s for tomorrow (to fit Vercel 10s serverless limit)
-        setTimeout(async () => {
-          try {
-            const profile = await supabaseService.getUserProfile(req.user.id, req.token);
-            if (profile && profile.web_push_subscription) {
-              const isExam = newEvent.category?.toLowerCase() === 'exam' || newEvent.title?.toLowerCase().includes('exam');
-              const categoryName = isExam ? 'Exam 📚' : `${newEvent.category || 'Event'} 📅`;
-              const dayName = diffDays === 0 ? 'today' : 'tomorrow';
+        try {
+          const profile = await supabaseService.getUserProfile(req.user.id, req.token);
+          if (profile && profile.web_push_subscription) {
+            const isExam = newEvent.category?.toLowerCase() === 'exam' || newEvent.title?.toLowerCase().includes('exam');
+            const categoryName = isExam ? 'Exam 📚' : `${newEvent.category || 'Event'} 📅`;
+            const dayName = diffDays === 0 ? 'today' : 'tomorrow';
 
-              const payload = {
-                title: `Upcoming ${categoryName} ${dayName === 'today' ? 'Today' : 'Tomorrow'}!`,
-                body: `Reminder: You have "${newEvent.title}" scheduled for ${dayName}. Time to study!`,
-                data: { eventId: newEvent.id }
-              };
+            const payload = {
+              title: `Upcoming ${categoryName} ${dayName === 'today' ? 'Today' : 'Tomorrow'}!`,
+              body: `Reminder: You have "${newEvent.title}" scheduled for ${dayName}. Time to study!`,
+              data: { eventId: newEvent.id }
+            };
 
-              await pushService.sendNotification(profile.web_push_subscription, payload);
-              await supabaseService.markReminderSent(newEvent.id);
-              console.log(`[Event Route] Instant push reminder sent for event: "${newEvent.title}"`);
-            }
-          } catch (pushErr) {
-            console.error('[Event Route] Failed to send instant push:', pushErr.message);
+            await pushService.sendNotification(profile.web_push_subscription, payload);
+            await supabaseService.markReminderSent(newEvent.id);
+            console.log(`[Event Route] Instant push reminder sent synchronously for event: "${newEvent.title}"`);
           }
-        }, delayMs);
+        } catch (pushErr) {
+          console.error('[Event Route] Failed to send instant push:', pushErr.message);
+        }
       }
     }
 
