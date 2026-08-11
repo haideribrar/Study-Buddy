@@ -70,6 +70,10 @@ router.post('/', async (req, res) => {
         try {
           const profile = await supabaseService.getUserProfile(req.user.id, req.token);
           if (profile && profile.web_push_subscription) {
+            // Await the delay synchronously to prevent Vercel from freezing the serverless process
+            const delayMs = diffDays === 0 ? 5000 : 8000; // 5s for today, 8s for tomorrow (fits Vercel's 10s timeout limit)
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+
             const isExam = newEvent.category?.toLowerCase() === 'exam' || newEvent.title?.toLowerCase().includes('exam');
             const categoryName = isExam ? 'Exam 📚' : `${newEvent.category || 'Event'} 📅`;
             const dayName = diffDays === 0 ? 'today' : 'tomorrow';
@@ -82,7 +86,7 @@ router.post('/', async (req, res) => {
 
             await pushService.sendNotification(profile.web_push_subscription, payload);
             await supabaseService.markReminderSent(newEvent.id);
-            console.log(`[Event Route] Instant push reminder sent synchronously for event: "${newEvent.title}"`);
+            console.log(`[Event Route] Instant push reminder sent synchronously after ${delayMs}ms for event: "${newEvent.title}"`);
           }
         } catch (pushErr) {
           console.error('[Event Route] Failed to send instant push:', pushErr.message);
