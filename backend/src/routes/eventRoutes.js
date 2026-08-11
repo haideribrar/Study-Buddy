@@ -67,30 +67,30 @@ router.post('/', async (req, res) => {
       const diffDays = Math.round((eventMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
 
       if (diffDays === 0 || diffDays === 1) {
-        try {
-          const profile = await supabaseService.getUserProfile(req.user.id, req.token);
-          if (profile && profile.web_push_subscription) {
-            // Await the delay synchronously to prevent Vercel from freezing the serverless process
-            const delayMs = diffDays === 0 ? 5000 : 8000; // 5s for today, 8s for tomorrow (fits Vercel's 10s timeout limit)
-            await new Promise(resolve => setTimeout(resolve, delayMs));
+        // Run in background (non-blocking) with 5s delay so Vercel can process it,
+        // while we return the HTTP response immediately to prevent client abort network errors.
+        setTimeout(async () => {
+          try {
+            const profile = await supabaseService.getUserProfile(req.user.id, req.token);
+            if (profile && profile.web_push_subscription) {
+              const isExam = newEvent.category?.toLowerCase() === 'exam' || newEvent.title?.toLowerCase().includes('exam');
+              const categoryName = isExam ? 'Exam 📚' : `${newEvent.category || 'Event'} 📅`;
+              const dayName = diffDays === 0 ? 'today' : 'tomorrow';
 
-            const isExam = newEvent.category?.toLowerCase() === 'exam' || newEvent.title?.toLowerCase().includes('exam');
-            const categoryName = isExam ? 'Exam 📚' : `${newEvent.category || 'Event'} 📅`;
-            const dayName = diffDays === 0 ? 'today' : 'tomorrow';
+              const payload = {
+                title: `Upcoming ${categoryName} ${dayName === 'today' ? 'Today' : 'Tomorrow'}!`,
+                body: `Reminder: You have "${newEvent.title}" scheduled for ${dayName}. Time to study!`,
+                data: { eventId: newEvent.id }
+              };
 
-            const payload = {
-              title: `Upcoming ${categoryName} ${dayName === 'today' ? 'Today' : 'Tomorrow'}!`,
-              body: `Reminder: You have "${newEvent.title}" scheduled for ${dayName}. Time to study!`,
-              data: { eventId: newEvent.id }
-            };
-
-            await pushService.sendNotification(profile.web_push_subscription, payload);
-            await supabaseService.markReminderSent(newEvent.id);
-            console.log(`[Event Route] Instant push reminder sent synchronously after ${delayMs}ms for event: "${newEvent.title}"`);
+              await pushService.sendNotification(profile.web_push_subscription, payload);
+              await supabaseService.markReminderSent(newEvent.id);
+              console.log(`[Event Route] Background push reminder sent after 5s for event: "${newEvent.title}"`);
+            }
+          } catch (pushErr) {
+            console.error('[Event Route] Failed to send background push:', pushErr.message);
           }
-        } catch (pushErr) {
-          console.error('[Event Route] Failed to send instant push:', pushErr.message);
-        }
+        }, 5000);
       }
     }
 
