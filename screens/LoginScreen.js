@@ -103,7 +103,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   style={[
-                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    tw`flex-1 text-slate-800 text-base font-semibold`,
                     Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
                   ]}
                 />
@@ -123,7 +123,7 @@ export default function LoginScreen({ onNavigate, onLogin }) {
                   onChangeText={(val) => { setPassword(val); setErrorMessage(''); }}
                   autoCapitalize="none"
                   style={[
-                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    tw`flex-1 text-slate-800 text-base font-semibold`,
                     Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
                   ]}
                 />

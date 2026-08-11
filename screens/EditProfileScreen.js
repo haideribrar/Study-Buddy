@@ -75,7 +75,7 @@ export default function EditProfileScreen({ username, onSaveProfile, onNavigate,
               value={name}
               onChangeText={setName}
               style={[
-                tw`bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-slate-800 font-semibold text-sm`,
+                tw`bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-slate-800 font-semibold text-base`,
                 Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
               ]}
             />

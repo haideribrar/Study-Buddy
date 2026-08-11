@@ -196,7 +196,7 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
                 value={title}
                 onChangeText={setTitle}
                 style={[
-                  tw`bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-slate-800 text-sm font-semibold`,
+                  tw`bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-slate-800 text-base font-semibold`,
                   Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
                 ]}
               />
@@ -260,7 +260,7 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
                 numberOfLines={3}
                 textAlignVertical="top"
                 style={[
-                  tw`bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3 text-slate-800 text-sm font-semibold h-20`,
+                  tw`bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3 text-slate-800 text-base font-semibold h-20`,
                   Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
                 ]}
               />
@@ -275,7 +275,7 @@ export default function AddEventScreen({ onAddEvent, onNavigate }) {
                 value={goal}
                 onChangeText={setGoal}
                 style={[
-                  tw`bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-slate-800 text-sm font-semibold`,
+                  tw`bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-slate-800 text-base font-semibold`,
                   Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
                 ]}
               />

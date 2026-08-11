@@ -160,4 +160,39 @@ router.post('/web-push-subscription', requireAuth, async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/auth/test-push
+ * @desc    Sends a test web push notification immediately to the logged-in user
+ */
+router.post('/test-push', requireAuth, async (req, res) => {
+  try {
+    const profile = await supabaseService.getUserProfile(req.user.id, req.token);
+    if (!profile || !profile.web_push_subscription) {
+      return res.status(400).json({ error: 'No active web push subscription found for this user.' });
+    }
+
+    const payload = {
+      title: 'Test Notification 🔔',
+      body: 'If you see this, Web Push notifications are working perfectly on iOS!',
+      data: { test: true }
+    };
+
+    const pushService = require('../services/pushService');
+    const pushRes = await pushService.sendNotification(profile.web_push_subscription, payload);
+
+    if (pushRes && pushRes.expired) {
+      await supabaseService.supabaseAdmin
+        .from('profiles')
+        .update({ web_push_subscription: null })
+        .eq('id', req.user.id);
+      return res.status(410).json({ error: 'Subscription expired and was cleared.' });
+    }
+
+    return res.status(200).json({ message: 'Test push notification sent successfully.' });
+  } catch (error) {
+    console.error('[Auth Route] Test push error:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

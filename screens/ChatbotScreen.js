@@ -330,7 +330,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
             onChangeText={setInputText}
             onSubmitEditing={handleSend}
             style={[
-              tw`flex-1 bg-slate-50 border border-slate-200/80 rounded-full px-5 py-2.5 text-slate-800 text-sm mr-3`,
+              tw`flex-1 bg-slate-50 border border-slate-200/80 rounded-full px-5 py-2.5 text-slate-800 text-base mr-3`,
               Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
             ]}
           />

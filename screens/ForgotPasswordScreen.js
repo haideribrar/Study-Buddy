@@ -98,7 +98,7 @@ export default function ForgotPasswordScreen({ onNavigate }) {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   style={[
-                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    tw`flex-1 text-slate-800 text-base font-semibold`,
                     Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
                   ]}
                 />
@@ -117,7 +117,7 @@ export default function ForgotPasswordScreen({ onNavigate }) {
                   onChangeText={(val) => { setHint(val); setErrorMessage(''); }}
                   autoCapitalize="none"
                   style={[
-                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    tw`flex-1 text-slate-800 text-base font-semibold`,
                     Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
                   ]}
                 />
@@ -137,7 +137,7 @@ export default function ForgotPasswordScreen({ onNavigate }) {
                   onChangeText={(val) => { setNewPassword(val); setErrorMessage(''); }}
                   autoCapitalize="none"
                   style={[
-                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    tw`flex-1 text-slate-800 text-base font-semibold`,
                     Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
                   ]}
                 />
@@ -160,7 +160,7 @@ export default function ForgotPasswordScreen({ onNavigate }) {
                   onChangeText={(val) => { setConfirmPassword(val); setErrorMessage(''); setSuccessMessage(''); }}
                   autoCapitalize="none"
                   style={[
-                    tw`flex-1 text-slate-800 text-sm font-semibold`,
+                    tw`flex-1 text-slate-800 text-base font-semibold`,
                     Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
                   ]}
                 />
