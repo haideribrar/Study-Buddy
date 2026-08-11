@@ -90,8 +90,10 @@ export default function App() {
         throw new Error(errData.error || 'Failed to update push subscription on server');
       }
       console.log('[WebPush] Web Push subscription successfully saved to backend.');
+      showAlert('WebPush Registered', 'Ready to receive notifications! 🔔');
     } catch (err) {
       console.warn('[WebPush] Error setting up Web Push notifications:', err.message);
+      showAlert('WebPush Registration Error', err.message);
     }
   };
 
