@@ -67,6 +67,7 @@ router.post('/', async (req, res) => {
       const diffDays = Math.round((eventMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
 
       if (diffDays === 0 || diffDays === 1) {
+        const delayMs = diffDays === 0 ? 5000 : 10000; // 5s for today, 10s for tomorrow (to fit Vercel 10s serverless limit)
         setTimeout(async () => {
           try {
             const profile = await supabaseService.getUserProfile(req.user.id, req.token);
@@ -88,7 +89,7 @@ router.post('/', async (req, res) => {
           } catch (pushErr) {
             console.error('[Event Route] Failed to send instant push:', pushErr.message);
           }
-        }, 5000); // 5 seconds delay
+        }, delayMs);
       }
     }
 

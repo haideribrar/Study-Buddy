@@ -566,8 +566,7 @@ export default function App() {
         }
       } else {
         if (response.status === 401) {
-          handleLogout();
-          showAlert("Session Expired", "Your session has expired. Please log in again.");
+          console.warn('[App] Session expired or invalid token on fetchEvents.');
           return;
         }
         console.error('[App] Fetch events failed or returned non-array:', data);
@@ -678,8 +677,7 @@ export default function App() {
         setEvents(originalEvents);
 
         if (response.status === 401) {
-          handleLogout();
-          showAlert("Session Expired", "Your session has expired. Please log in again.");
+          console.warn('[App] Session expired or invalid token on handleAddEvent.');
           return;
         }
         showAlert("Error", data.error || "Failed to create event");
@@ -740,8 +738,7 @@ export default function App() {
         setEvents(originalEvents);
 
         if (response.status === 401) {
-          handleLogout();
-          showAlert("Session Expired", "Your session has expired. Please log in again.");
+          console.warn('[App] Session expired or invalid token on handleDeleteEvent.');
           return;
         }
         const data = await response.json();
@@ -794,8 +791,7 @@ export default function App() {
         })
       }).then(res => {
         if (res.status === 401) {
-          handleLogout();
-          showAlert("Session Expired", "Your session has expired. Please log in again.");
+          console.warn('[App] Session expired or invalid token on syncProgressUpdate.');
         }
       }).catch((err) => {
         console.error('[App] Progress update sync error:', err.message);
