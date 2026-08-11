@@ -90,10 +90,8 @@ export default function App() {
         throw new Error(errData.error || 'Failed to update push subscription on server');
       }
       console.log('[WebPush] Web Push subscription successfully saved to backend.');
-      showAlert('WebPush Registered', 'Ready to receive notifications! 🔔');
     } catch (err) {
       console.warn('[WebPush] Error setting up Web Push notifications:', err.message);
-      showAlert('WebPush Registration Error', err.message);
     }
   };
 
@@ -1017,35 +1015,7 @@ export default function App() {
                     <Text style={tw`text-sm font-semibold text-slate-800`}>Edit Profile</Text>
                   </TouchableOpacity>
 
-                  {Platform.OS === 'web' && (
-                    <TouchableOpacity
-                      onPress={async () => {
-                        try {
-                          const res = await fetch(`${API_BASE_URL}/api/auth/test-push`, {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'Authorization': `Bearer ${token}`
-                            }
-                          });
-                          const data = await res.json();
-                          if (res.ok) {
-                            showAlert("Push Sent", "Check your lock screen! 🔔");
-                          } else {
-                            showAlert("Push Failed", data.error || "Could not send push notification.");
-                          }
-                        } catch (err) {
-                          showAlert("Network Error", err.message);
-                        }
-                      }}
-                      style={tw`flex-row items-center bg-white/80 border border-slate-200/60 rounded-[20px] p-4 mb-4 shadow-sm`}
-                    >
-                      <View style={tw`w-8 h-8 bg-indigo-50 rounded-full items-center justify-center mr-3`}>
-                        <Feather name="bell" size={14} color="#6366F1" />
-                      </View>
-                      <Text style={tw`text-sm font-semibold text-slate-800`}>Test Push Alert</Text>
-                    </TouchableOpacity>
-                  )}
+
 
                   <TouchableOpacity
                     onPress={() => {
