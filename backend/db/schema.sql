@@ -71,4 +71,8 @@ USING (auth.uid() = user_id);
 -- Ensure existing profiles table has the reset_hint column
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS reset_hint TEXT;
 
+-- Web Push Notifications support columns
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS web_push_subscription JSONB;
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS reminder_sent BOOLEAN DEFAULT FALSE;
+
 

@@ -376,6 +376,69 @@ const getUserMessageCountToday = async (userId, userToken) => {
   return count || 0;
 };
 
+/**
+ * Saves or clears a web push subscription for a user profile.
+ */
+const updatePushSubscription = async (userId, subscription, userToken) => {
+  const userClient = getSupabaseUserClient(userToken);
+  const { data, error } = await userClient
+    .from('profiles')
+    .update({
+      web_push_subscription: subscription,
+      updated_at: new Date()
+    })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+/**
+ * Fetches all events where reminder_sent is false and joins profile to get user push subscription.
+ * Runs on admin context because background workers don't act as a user.
+ */
+const getDueReminders = async () => {
+  if (!supabaseAdmin) return [];
+
+  // Query events where reminder_sent is false
+  const { data: events, error } = await supabaseAdmin
+    .from('events')
+    .select('*, profiles(web_push_subscription)')
+    .eq('reminder_sent', false);
+
+  if (error) {
+    console.error('[Supabase Service] getDueReminders error:', error.message);
+    throw error;
+  }
+
+  return (events || []).map(event => ({
+    id: event.id,
+    userId: event.user_id,
+    title: event.title,
+    date: event.date,
+    category: event.category,
+    subscription: event.profiles ? event.profiles.web_push_subscription : null
+  }));
+};
+
+/**
+ * Marks an event's reminder as sent.
+ */
+const markReminderSent = async (eventId) => {
+  if (!supabaseAdmin) return;
+  const { error } = await supabaseAdmin
+    .from('events')
+    .update({ reminder_sent: true })
+    .eq('id', eventId);
+
+  if (error) {
+    console.error('[Supabase Service] markReminderSent error:', error.message);
+    throw error;
+  }
+};
+
 module.exports = {
   supabaseAdmin,
   getSupabaseUserClient,
@@ -391,6 +454,9 @@ module.exports = {
   saveChatMessage,
   checkEmailExists,
   resetPasswordWithHint,
-  getUserMessageCountToday
+  getUserMessageCountToday,
+  updatePushSubscription,
+  getDueReminders,
+  markReminderSent
 };
 

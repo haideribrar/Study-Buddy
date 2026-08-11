@@ -142,4 +142,22 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/auth/web-push-subscription
+ * @desc    Updates user web push subscription details
+ */
+router.post('/web-push-subscription', requireAuth, async (req, res) => {
+  const { subscription } = req.body;
+
+  try {
+    await supabaseService.updatePushSubscription(req.user.id, subscription, req.token);
+    return res.status(200).json({
+      message: 'Web Push subscription updated successfully.'
+    });
+  } catch (error) {
+    console.error('[Auth Route] Web Push Subscription update error:', error.message);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

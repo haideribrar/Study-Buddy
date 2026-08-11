@@ -26,6 +26,67 @@ export default function App() {
     restoreSession();
   }, []);
 
+  const urlBase64ToUint8Array = (base64String) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, '+')
+      .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  const setupWebPushNotifications = async (sessionToken) => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('[WebPush] Service Worker registered successfully.');
+
+      let permission = Notification.permission;
+      if (permission === 'default') {
+        permission = await Notification.requestPermission();
+      }
+
+      if (permission !== 'granted') {
+        console.log('[WebPush] Notification permission denied by user.');
+        return;
+      }
+
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        const vapidPublicKey = 'BMbPO29jbztNSss6oy-YtrQRMBLsrIeDGAn1dfnCiFwdS1B6luIv1g_qW48IM5AsL71X03zkD4GtKXvxbsPUShI';
+        const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedVapidKey
+        });
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/web-push-subscription`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
+        body: JSON.stringify({ subscription })
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to update push subscription on server');
+      }
+      console.log('[WebPush] Web Push subscription successfully saved to backend.');
+    } catch (err) {
+      console.warn('[WebPush] Error setting up Web Push notifications:', err.message);
+    }
+  };
+
   const restoreSession = async () => {
     try {
       // 1. Instantly load cached events from storage
@@ -60,6 +121,7 @@ export default function App() {
           setToken(savedToken);
           setCurrentScreen('dashboard');
           fetchEvents(savedToken);
+          setupWebPushNotifications(savedToken);
         }
       }
     } catch (err) {
@@ -115,6 +177,7 @@ export default function App() {
     setCurrentScreen('dashboard');
     fetchEvents(sessionToken);
     saveSession({ fullName: displayName, email: user?.email }, sessionToken);
+    setupWebPushNotifications(sessionToken);
   };
 
   const handleSignup = (user, sessionToken) => {
@@ -124,6 +187,7 @@ export default function App() {
     setCurrentScreen('dashboard');
     fetchEvents(sessionToken);
     saveSession({ fullName: displayName, email: user?.email }, sessionToken);
+    setupWebPushNotifications(sessionToken);
   };
 
 
