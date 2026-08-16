@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
 import tw from 'twrnc';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config';
@@ -74,9 +74,11 @@ export default function LoginScreen({ onNavigate, onLogin }) {
         <ScrollView contentContainerStyle={tw`flex-grow justify-center px-6 py-10`}>
           {/* Modern Branding Logo */}
           <View style={tw`items-center mb-6`}>
-            <View style={tw`w-18 h-18 bg-indigo-50 border border-indigo-100 rounded-full items-center justify-center shadow-xs mb-3`}>
-              <FontAwesome name="smile-o" size={36} color="#4F46E5" />
-            </View>
+            <Image
+              source={require('../assets/icon.png')}
+              style={tw`w-18 h-18 rounded-2xl mb-3 shadow-xs`}
+              resizeMode="contain"
+            />
             <Text style={tw`text-2xl font-extrabold text-slate-900 tracking-tight`}>
               Study Buddy
             </Text>

@@ -199,7 +199,7 @@ export default function App() {
   };
 
 
-  const FAVICON_DATA_URL = "/favicon.png";
+  const FAVICON_DATA_URL = "/favicon.png?v=4";
 
   React.useEffect(() => {
     if (Platform.OS === 'web') {

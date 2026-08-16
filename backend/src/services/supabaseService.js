@@ -402,10 +402,10 @@ const updatePushSubscription = async (userId, subscription, userToken) => {
 const getDueReminders = async () => {
   if (!supabaseAdmin) return [];
 
-  // Query events where reminder_sent is false
+  // 1. Query events where reminder_sent is false
   const { data: events, error } = await supabaseAdmin
     .from('events')
-    .select('*, profiles(web_push_subscription)')
+    .select('*')
     .eq('reminder_sent', false);
 
   if (error) {
@@ -413,13 +413,33 @@ const getDueReminders = async () => {
     throw error;
   }
 
-  return (events || []).map(event => ({
+  if (!events || events.length === 0) return [];
+
+  // 2. Fetch profiles for these users to get their web_push_subscription
+  const userIds = [...new Set(events.map(e => e.user_id))];
+  const { data: profiles, error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .select('id, web_push_subscription')
+    .in('id', userIds);
+
+  if (profileError) {
+    console.error('[Supabase Service] getDueReminders profile fetch error:', profileError.message);
+  }
+
+  const subscriptionMap = {};
+  if (profiles) {
+    profiles.forEach(p => {
+      subscriptionMap[p.id] = p.web_push_subscription;
+    });
+  }
+
+  return events.map(event => ({
     id: event.id,
     userId: event.user_id,
     title: event.title,
     date: event.date,
     category: event.category,
-    subscription: event.profiles ? event.profiles.web_push_subscription : null
+    subscription: subscriptionMap[event.user_id] || null
   }));
 };
 

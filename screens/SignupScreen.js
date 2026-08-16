@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
 import tw from 'twrnc';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import { API_BASE_URL } from '../config';
@@ -91,9 +91,11 @@ export default function SignupScreen({ onNavigate, onSignup }) {
       >
         <ScrollView contentContainerStyle={tw`flex-grow justify-center px-6 py-6`}>
           <View style={tw`items-center mb-5`}>
-            <View style={tw`w-16 h-16 bg-indigo-50 border border-indigo-100 rounded-full items-center justify-center shadow-xs mb-2`}>
-              <FontAwesome name="smile-o" size={32} color="#4F46E5" />
-            </View>
+            <Image
+              source={require('../assets/icon.png')}
+              style={tw`w-16 h-16 rounded-2xl mb-2 shadow-xs`}
+              resizeMode="contain"
+            />
             <Text style={tw`text-xl font-extrabold text-slate-900 tracking-tight`}>Create Account</Text>
             <Text style={tw`text-[9px] text-indigo-600 mt-0.5 font-extrabold uppercase tracking-widest`}>Begin your focused study program</Text>
           </View>
