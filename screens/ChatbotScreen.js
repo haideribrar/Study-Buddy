@@ -30,6 +30,9 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  const showKeyboard = isKeyboardVisible || isInputFocused;
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
@@ -322,13 +325,15 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
         </ScrollView>
 
         {/* Floating Input Bar */}
-        <View style={tw`px-6 py-3.5 bg-white/95 border-t border-slate-200/60 flex-row items-center ${isKeyboardVisible ? 'mb-0' : 'mb-28'}`}>
+        <View style={tw`px-6 py-3.5 bg-white/95 border-t border-slate-200/60 flex-row items-center ${showKeyboard ? 'mb-0' : 'mb-28'}`}>
           <TextInput
             placeholder="Type your study question here..."
             placeholderTextColor="#94A3B8"
             value={inputText}
             onChangeText={setInputText}
             onSubmitEditing={handleSend}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
             style={[
               tw`flex-1 bg-slate-50 border border-slate-200/80 rounded-full px-5 py-2.5 text-slate-800 text-base mr-3`,
               Platform.OS === 'web' ? { outlineStyle: 'none' } : {}
@@ -344,7 +349,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
       </KeyboardAvoidingView>
 
       {/* Floating Glass Navigation Bar */}
-      {!isMenuOpen && !isKeyboardVisible && (
+      {!isMenuOpen && !showKeyboard && (
         <View style={tw`absolute bottom-6 left-6 right-6 bg-white/90 border border-white/80 rounded-full py-2.5 px-6 flex-row justify-between items-center shadow-xl shadow-indigo-500/10 backdrop-blur-lg`}>
           {navItems.map((item) => {
             const isActive = item.id === 'chatbot';
