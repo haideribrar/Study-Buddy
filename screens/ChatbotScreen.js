@@ -32,7 +32,7 @@ export default function ChatbotScreen({ onNavigate, onOpenMenu, token, chatMessa
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
 
-  const showKeyboard = isKeyboardVisible || isInputFocused;
+  const showKeyboard = Platform.OS === 'web' ? isInputFocused : isKeyboardVisible;
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
